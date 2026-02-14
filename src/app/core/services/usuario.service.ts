@@ -1,34 +1,43 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { Observable, catchError, throwError } from 'rxjs';
 import { environment } from '../../../environments/environment';
-import { Usuario } from '../models/usuario.model';
+import { Usuario, ApiResponse } from '../models/usuario.model';
 
 @Injectable({
   providedIn: 'root'
 })
 export class UsuarioService {
-  private apiUrl = `${environment.apiUrl}/usuarios`;
+  private apiUrl = `${environment.apiUrl}/usuarios`;  // /api/usuarios
 
   constructor(private http: HttpClient) {}
 
-  getAll(): Observable<Usuario[]> {
-    return this.http.get<Usuario[]>(this.apiUrl);
+  // GET /api/usuarios - Listar todos
+  getAll(): Observable<ApiResponse & { data: Usuario[] }> {
+    return this.http.get<ApiResponse & { data: Usuario[] }>(this.apiUrl)
+      .pipe(catchError(this.handleError));
   }
 
-  getById(id: number): Observable<Usuario> {
-    return this.http.get<Usuario>(`${this.apiUrl}/${id}`);
+  // GET /api/usuarios/:id - Obtener por ID
+  getById(id: number): Observable<ApiResponse & { data: Usuario }> {
+    return this.http.get<ApiResponse & { data: Usuario }>(`${this.apiUrl}/${id}`)
+      .pipe(catchError(this.handleError));
   }
 
-  create(usuario: Usuario): Observable<Usuario> {
-    return this.http.post<Usuario>(this.apiUrl, usuario);
+  // PUT /api/usuarios/:id - Actualizar
+  update(id: number, usuario: Partial<Usuario>): Observable<ApiResponse & { data: Usuario }> {
+    return this.http.put<ApiResponse & { data: Usuario }>(`${this.apiUrl}/${id}`, usuario)
+      .pipe(catchError(this.handleError));
   }
 
-  update(id: number, usuario: Usuario): Observable<Usuario> {
-    return this.http.put<Usuario>(`${this.apiUrl}/${id}`, usuario);
+  // DELETE /api/usuarios/:id - Eliminar
+  delete(id: number): Observable<ApiResponse> {
+    return this.http.delete<ApiResponse>(`${this.apiUrl}/${id}`)
+      .pipe(catchError(this.handleError));
   }
 
-  delete(id: number): Observable<void> {
-    return this.http.delete<void>(`${this.apiUrl}/${id}`);
+  private handleError(error: any) {
+    console.error('Error en usuario service:', error);
+    return throwError(() => error);
   }
 }

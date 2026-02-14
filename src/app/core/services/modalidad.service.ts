@@ -1,34 +1,56 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { Observable, catchError, throwError } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { Modalidad } from '../models/modalidad.model';
+
+export interface ApiResponse<T> {
+  success: boolean;
+  message?: string;
+  data?: T;
+  count?: number;
+}
 
 @Injectable({
   providedIn: 'root'
 })
 export class ModalidadService {
-  private apiUrl = `${environment.apiUrl}/modalidades`;
+  private apiUrl = `${environment.apiUrl}/modalidades`;  // /api/modalidades
 
   constructor(private http: HttpClient) {}
 
-  getAll(): Observable<Modalidad[]> {
-    return this.http.get<Modalidad[]>(this.apiUrl);
+  // GET /api/modalidades - Listar todas
+  getAll(): Observable<ApiResponse<Modalidad[]>> {
+    return this.http.get<ApiResponse<Modalidad[]>>(this.apiUrl)
+      .pipe(catchError(this.handleError));
   }
 
-  getById(id: number): Observable<Modalidad> {
-    return this.http.get<Modalidad>(`${this.apiUrl}/${id}`);
+  // GET /api/modalidades/:id - Obtener por ID
+  getById(id: number): Observable<ApiResponse<Modalidad>> {
+    return this.http.get<ApiResponse<Modalidad>>(`${this.apiUrl}/${id}`)
+      .pipe(catchError(this.handleError));
   }
 
-  create(modalidad: Modalidad): Observable<Modalidad> {
-    return this.http.post<Modalidad>(this.apiUrl, modalidad);
+  // POST /api/modalidades - Crear
+  create(modalidad: Partial<Modalidad>): Observable<ApiResponse<Modalidad>> {
+    return this.http.post<ApiResponse<Modalidad>>(this.apiUrl, modalidad)
+      .pipe(catchError(this.handleError));
   }
 
-  update(id: number, modalidad: Modalidad): Observable<Modalidad> {
-    return this.http.put<Modalidad>(`${this.apiUrl}/${id}`, modalidad);
+  // PUT /api/modalidades/:id - Actualizar
+  update(id: number, modalidad: Partial<Modalidad>): Observable<ApiResponse<Modalidad>> {
+    return this.http.put<ApiResponse<Modalidad>>(`${this.apiUrl}/${id}`, modalidad)
+      .pipe(catchError(this.handleError));
   }
 
-  delete(id: number): Observable<void> {
-    return this.http.delete<void>(`${this.apiUrl}/${id}`);
+  // DELETE /api/modalidades/:id - Eliminar
+  delete(id: number): Observable<ApiResponse<void>> {
+    return this.http.delete<ApiResponse<void>>(`${this.apiUrl}/${id}`)
+      .pipe(catchError(this.handleError));
+  }
+
+  private handleError(error: any) {
+    console.error('Error en modalidad service:', error);
+    return throwError(() => error);
   }
 }

@@ -15,7 +15,10 @@ export class AuthInterceptor implements HttpInterceptor {
   intercept(req: HttpRequest<any>, next: HttpHandler): Observable<HttpEvent<any>> {
     const token = this.authService.getToken();
     
-    if (token) {
+    // Excluir rutas públicas si es necesario
+    const isPublicRoute = req.url.includes('/auth/login') || req.url.includes('/auth/register');
+    
+    if (token && !isPublicRoute) {
       req = req.clone({
         setHeaders: {
           Authorization: `Bearer ${token}`
@@ -26,9 +29,18 @@ export class AuthInterceptor implements HttpInterceptor {
     return next.handle(req).pipe(
       catchError((error: HttpErrorResponse) => {
         if (error.status === 401) {
+          // Token expirado o inválido
           this.authService.logout();
-          this.router.navigate(['/auth/login']);
+          this.router.navigate(['/auth/login'], {
+            queryParams: { session: 'expired' }
+          });
         }
+        
+        // Error 403 - Prohibido (sin permisos)
+        if (error.status === 403) {
+          this.router.navigate(['/dashboard']);
+        }
+        
         return throwError(() => error);
       })
     );

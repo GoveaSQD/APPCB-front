@@ -1,0 +1,102 @@
+<div class="flex align-items-center justify-content-center min-h-screen login-bg">
+  <p-toast position="top-right"></p-toast>
+  <div class="login-card">
+    
+    <div class="logo-login"></div>
+
+    <h1 class="text-3xl font-bold text-900 mb-2 text-center" style="color: #1f3d66;">Bienvenido</h1>
+    <p class="text-500 text-lg text-center mb-5">Sistema de Gestión de Becas</p>
+
+    <form [formGroup]="loginForm" (ngSubmit)="onSubmit()" class="flex flex-column gap-4">
+      
+      <div class="flex flex-column gap-2">
+        <label for="email" class="text-sm font-medium text-700">Correo electrónico</label>
+        <p-inputgroup>
+          <p-inputgroup-addon>
+            <i class="pi pi-envelope"></i>
+          </p-inputgroup-addon>
+          <input 
+            pInputText 
+            id="email"
+            type="email"
+            formControlName="email"
+            placeholder="correo@ejemplo.com"
+            class="w-full"
+            [class.ng-invalid]="submitted && f['email'].errors">
+        </p-inputgroup>
+        @if (submitted && f['email'].errors) {
+          <small class="p-error">
+            {{ f['email'].errors['required'] ? 'El correo es requerido' : 'Correo inválido' }}
+          </small>
+        }
+      </div>
+
+      <div class="flex flex-column gap-2">
+        <label for="password" class="text-sm font-medium text-700">Contraseña</label>
+        <p-inputgroup>
+          <p-inputgroup-addon>
+            <i class="pi pi-lock"></i>
+          </p-inputgroup-addon>
+          <p-password 
+            id="password"
+            formControlName="password"
+            [feedback]="false"
+            [toggleMask]="true"
+            placeholder="••••••••"
+            [style]="{'width': '100%'}"
+            inputStyleClass="w-full"
+            [class.ng-invalid]="submitted && f['password'].errors">
+          </p-password>
+        </p-inputgroup>
+        @if (submitted && f['password'].errors) {
+          <small class="p-error">
+            {{ f['password'].errors['required'] ? 'La contraseña es requerida' : 'Mínimo 6 caracteres' }}
+          </small>
+        }
+      </div>
+
+      <div class="flex align-items-center justify-content-between">
+        <div class="flex align-items-center gap-2">
+          <p-checkbox 
+            formControlName="rememberMe" 
+            [binary]="true" 
+            inputId="rememberMe">
+          </p-checkbox>
+          <label for="rememberMe" class="text-sm text-600 cursor-pointer">Recordarme</label>
+        </div>
+        <a 
+          class="text-sm text-primary cursor-pointer no-underline font-medium hover:text-primary-600"
+          (click)="onForgotPassword()">
+          ¿Olvidaste tu contraseña?
+        </a>
+      </div>
+
+      <p-button 
+        type="submit" 
+        label="Iniciar Sesión" 
+        icon="pi pi-sign-in"
+        [loading]="loading"
+        styleClass="w-full p-3 text-lg font-medium"
+        [raised]="true">
+      </p-button>
+
+      <div class="flex align-items-center gap-2 text-sm text-500">
+        <span class="flex-1 border-top-1 border-300"></span>
+        <span>¿No tienes cuenta?</span>
+        <span class="flex-1 border-top-1 border-300"></span>
+      </div>
+
+      <p-button 
+        type="button" 
+        label="Crear cuenta nueva" 
+        icon="pi pi-user-plus"
+        styleClass="p-button-outlined w-full p-3 text-lg font-medium"
+        routerLink="/auth/register">
+      </p-button>
+    </form>
+
+    <div class="text-center mt-4 text-sm text-500">
+      © 2026 Sistema de Becas. Todos los derechos reservados.
+    </div>
+  </div>
+</div>

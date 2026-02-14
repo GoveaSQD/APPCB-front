@@ -1,0 +1,37 @@
+<div class="fixed top-0 left-0 w-full z-5">
+  <p-menubar [model]="items" styleClass="border-noround shadow-2 px-4">
+    <!-- Logo a la izquierda -->
+    <ng-template pTemplate="start">
+      <div class="flex align-items-center mr-3">
+        <div class="bg-primary border-circle flex align-items-center justify-content-center mr-2" style="width: 40px; height: 40px;">
+          <i class="pi pi-graduation-cap text-white text-xl"></i>
+        </div>
+        <span class="font-bold text-xl">Becas U</span>
+      </div>
+    </ng-template>
+
+    <!-- Usuario a la derecha -->
+    <ng-template pTemplate="end">
+      <div class="flex align-items-center gap-3">
+        <span class="text-sm hidden md:block text-600">
+          {{ usuario?.nombre }}
+          <span class="text-xs bg-primary-100 text-primary-700 px-2 py-1 border-round ml-2">
+            {{ usuario?.rol === 'admin' ? 'Admin' : 'Usuario' }}
+          </span>
+        </span>
+        <p-avatar 
+          [label]="usuario?.nombre?.charAt(0)?.toUpperCase() || 'U'" 
+          styleClass="mr-2 cursor-pointer"
+          size="large"
+          shape="circle"
+          [style]="{'background-color': '#2196F3', 'color': '#ffffff'}"
+          (click)="menu.toggle($event)">
+        </p-avatar>
+        <p-menu #menu [model]="userMenu" [popup]="true"></p-menu>
+      </div>
+    </ng-template>
+  </p-menubar>
+</div>
+
+<!-- Espaciador para que el contenido no quede debajo del navbar -->
+<div class="mt-7"></div>

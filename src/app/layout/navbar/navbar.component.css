@@ -1,0 +1,27 @@
+:host {
+  display: block;
+}
+
+.p-menubar {
+  border-radius: 0;
+  background: white;
+  padding: 0.5rem 1rem;
+}
+
+::ng-deep .p-menubar .p-menuitem-link {
+  border-radius: 8px;
+  margin: 0 2px;
+}
+
+::ng-deep .p-menubar .p-menuitem-link:hover {
+  background: #f0f2f5;
+}
+
+::ng-deep .p-avatar {
+  transition: all 0.2s ease;
+}
+
+::ng-deep .p-avatar:hover {
+  opacity: 0.8;
+  transform: scale(1.05);
+}

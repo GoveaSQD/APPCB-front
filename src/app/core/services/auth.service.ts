@@ -1,8 +1,8 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable, tap } from 'rxjs';
+import { Observable, tap, map, catchError, throwError } from 'rxjs';
 import { environment } from '../../../environments/environment';
-import { LoginRequest, RegisterRequest, AuthResponse, Usuario } from '../models/usuario.model';
+import { LoginRequest, RegisterRequest, AuthResponse, Usuario, LoginResponse } from '../models/usuario.model';
 
 @Injectable({
   providedIn: 'root'
@@ -15,24 +15,53 @@ export class AuthService {
   constructor(private http: HttpClient) {}
 
   login(credentials: LoginRequest): Observable<AuthResponse> {
-    return this.http.post<AuthResponse>(`${this.apiUrl}/login`, credentials).pipe(
-      tap(response => this.setSession(response))
+    return this.http.post<LoginResponse>(`${this.apiUrl}/login`, credentials).pipe(
+      map(response => ({
+        success: response.success,
+        message: response.message,
+        token: response.data.token,
+        usuario: response.data.user
+      })),
+      tap(response => {
+        if (response.success && response.token) {
+          this.setSession(response);
+        }
+      }),
+      catchError(this.handleError)
     );
   }
 
   register(userData: RegisterRequest): Observable<AuthResponse> {
-    return this.http.post<AuthResponse>(`${this.apiUrl}/register`, userData).pipe(
-      tap(response => this.setSession(response))
+    return this.http.post<LoginResponse>(`${this.apiUrl}/register`, userData).pipe(
+      map(response => ({
+        success: response.success,
+        message: response.message,
+        token: response.data.token,
+        usuario: response.data.user
+      })),
+      tap(response => {
+        if (response.success && response.token) {
+          this.setSession(response);
+        }
+      }),
+      catchError(this.handleError)
+    );
+  }
+
+  getProfile(): Observable<{ success: boolean; data: Usuario }> {
+    return this.http.get<{ success: boolean; data: Usuario }>(`${this.apiUrl}/profile`).pipe(
+      tap(response => {
+        if (response.success) {
+          localStorage.setItem(this.userKey, JSON.stringify(response.data));
+        }
+      }),
+      catchError(this.handleError)
     );
   }
 
   logout(): void {
     localStorage.removeItem(this.tokenKey);
     localStorage.removeItem(this.userKey);
-  }
-
-  getProfile(): Observable<Usuario> {
-    return this.http.get<Usuario>(`${this.apiUrl}/profile`);
   }
 
   private setSession(authResult: AuthResponse): void {
@@ -56,5 +85,10 @@ export class AuthService {
   isAdmin(): boolean {
     const user = this.getUser();
     return user?.rol === 'admin';
+  }
+
+  private handleError(error: any) {
+    console.error('Error en auth service:', error);
+    return throwError(() => error);
   }
 }
