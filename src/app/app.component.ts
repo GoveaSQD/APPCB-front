@@ -1,23 +1,25 @@
 import { Component } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
+import { CommonModule } from '@angular/common';
 
-// PrimeNG Components (IMPORTACIÓN DIRECTA - standalone)
-import { ButtonModule } from 'primeng/button';
+// PrimeNG
 import { ToastModule } from 'primeng/toast';
-import { CardModule } from 'primeng/card';
+import { ConfirmDialogModule } from 'primeng/confirmdialog';
 
 @Component({
   selector: 'app-root',
-  standalone: true,  // ✅ Importante: standalone
+  standalone: true,
   imports: [
+    CommonModule,
     RouterOutlet,
-    // PrimeNG components standalone
-    ButtonModule,
     ToastModule,
-    CardModule
+    ConfirmDialogModule
   ],
-  templateUrl: './app.component.html',
-  styleUrls: ['./app.component.css']
+  template: `
+    <p-toast position="top-right"></p-toast>
+    <p-confirmDialog></p-confirmDialog>
+    <router-outlet></router-outlet>
+  `
 })
 export class AppComponent {
   title = 'sistema-becas-frontend';
