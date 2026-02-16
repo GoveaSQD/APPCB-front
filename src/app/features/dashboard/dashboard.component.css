@@ -1,0 +1,74 @@
+.dashboard-container {
+  background: #f8fafc;
+  min-height: calc(100vh - 80px);
+}
+
+.stats-card {
+  border-radius: 16px;
+  transition: all 0.3s ease;
+  border: 1px solid #e2e8f0;
+  background: white;
+}
+
+.stats-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.1);
+}
+
+.stats-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.stats-label {
+  font-size: 0.875rem;
+  color: #64748b;
+  display: block;
+  margin-bottom: 4px;
+}
+
+.stats-value {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: #1e293b;
+  line-height: 1.2;
+}
+
+:host ::ng-deep .p-card {
+  border-radius: 16px;
+  height: 100%;
+}
+
+:host ::ng-deep .p-card .p-card-content {
+  padding: 0;
+}
+
+:host ::ng-deep .p-progressbar {
+  background: #e2e8f0;
+  border-radius: 999px;
+}
+
+:host ::ng-deep .p-progressbar .p-progressbar-value {
+  background: #1f3d66;
+  border-radius: 999px;
+}
+
+:host ::ng-deep .p-tag {
+  border-radius: 999px;
+  padding: 4px 12px;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .dashboard-container {
+    padding: 1rem !important;
+  }
+  
+  .stats-value {
+    font-size: 1.25rem;
+  }
+}

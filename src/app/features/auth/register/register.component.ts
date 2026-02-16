@@ -11,6 +11,8 @@ import { ToastModule } from 'primeng/toast';
 import { RippleModule } from 'primeng/ripple';
 import { CheckboxModule } from 'primeng/checkbox';
 import { RadioButtonModule } from 'primeng/radiobutton';
+import { InputGroupModule } from 'primeng/inputgroup';
+import { InputGroupAddonModule } from 'primeng/inputgroupaddon';
 import { MessageService } from 'primeng/api';
 
 // Services
@@ -29,10 +31,13 @@ import { AuthService } from '../../../core/services/auth.service';
     ToastModule,
     RippleModule,
     CheckboxModule,
-    RadioButtonModule
+    RadioButtonModule,
+    InputGroupModule,
+    InputGroupAddonModule
   ],
   providers: [MessageService],
-  templateUrl: './register.component.html'
+  templateUrl: './register.component.html',
+  styleUrls: ['./register.component.css']
 })
 export class RegisterComponent {
   registerForm: FormGroup;
@@ -47,6 +52,8 @@ export class RegisterComponent {
   ) {
     this.registerForm = this.fb.group({
       nombre: ['', [Validators.required, Validators.minLength(3)]],
+      ap_paterno: ['', [Validators.required, Validators.minLength(2)]],
+      ap_materno: [''],
       email: ['', [Validators.required, Validators.email]],
       password: ['', [Validators.required, Validators.minLength(6)]],
       confirmPassword: ['', [Validators.required]],
@@ -71,6 +78,7 @@ export class RegisterComponent {
       return { passwordMismatch: true };
     }
 
+    confirmPassword?.setErrors(null);
     return null;
   }
 
@@ -80,54 +88,82 @@ export class RegisterComponent {
     this.submitted = true;
 
     if (this.registerForm.invalid) {
+      // Marcar todos los campos como tocados para mostrar errores
+      Object.keys(this.registerForm.controls).forEach(key => {
+        const control = this.registerForm.get(key);
+        control?.markAsTouched();
+      });
+
       this.messageService.add({
         severity: 'error',
-        summary: 'Formulario inválido',
-        detail: 'Por favor, completa todos los campos correctamente',
-        life: 5000
+        summary: 'Error',
+        detail: 'Por favor completa todos los campos correctamente',
+        life: 3000
       });
       return;
     }
 
     this.loading = true;
 
-    this.authService.register({
+    const registerData = {
       nombre: this.f['nombre'].value,
+      ap_paterno: this.f['ap_paterno'].value,
+      ap_materno: this.f['ap_materno'].value,
       email: this.f['email'].value,
       password: this.f['password'].value,
+      telefono: this.f['telefono'].value || null,
       rol: this.f['rol'].value
-    }).subscribe({
+    };
+
+    this.authService.register(registerData).subscribe({
       next: (response) => {
         if (response.success) {
+          const nombreCompleto = `${response.usuario.nombre} ${response.usuario.ap_paterno || ''} ${response.usuario.ap_materno || ''}`.trim();
+          
           this.messageService.add({
             severity: 'success',
             summary: '¡Registro exitoso!',
-            detail: `Bienvenido ${response.usuario.nombre}`,
+            detail: `Bienvenido ${nombreCompleto}`,
             life: 2000
           });
           
+          localStorage.setItem('token', response.token);
+          
           setTimeout(() => {
             this.router.navigate(['/dashboard']);
-          }, 1000);
+          }, 1500);
         } else {
           this.messageService.add({
             severity: 'error',
             summary: 'Error',
-            detail: response.message || 'Error al registrar',
-            life: 5000
+            detail: response.message || 'Error al registrar usuario',
+            life: 4000
           });
           this.loading = false;
         }
       },
       error: (error) => {
+        console.error('Error:', error);
+        const errorMsg = error.error?.message || error.message || 'Error al conectar con el servidor';
+        
         this.messageService.add({
           severity: 'error',
           summary: 'Error',
-          detail: error.error?.message || 'Error al conectar con el servidor',
+          detail: errorMsg,
           life: 5000
         });
+        
         this.loading = false;
       }
+    });
+  }
+
+  onTermsClick(): void {
+    this.messageService.add({
+      severity: 'info',
+      summary: 'Términos y condiciones',
+      detail: 'Funcionalidad en desarrollo',
+      life: 3000
     });
   }
 }

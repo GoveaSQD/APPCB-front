@@ -1,163 +1,248 @@
-<div class="flex align-items-center justify-content-center min-h-screen bg-primary-50 p-3">
-  <div class="surface-card p-6 shadow-4 border-round-xl w-full lg:w-6">
-    <!-- Header -->
-    <div class="text-center mb-5">
-      <div class="bg-primary inline-flex align-items-center justify-content-center w-4rem h-4rem border-circle shadow-3 mb-3">
-        <i class="pi pi-user-plus text-3xl text-white"></i>
-      </div>
-      <h2 class="text-2xl font-bold text-900 mb-2">Crear cuenta</h2>
-      <p class="text-500">Completa tus datos para registrarte</p>
-    </div>
+<div class="flex align-items-center justify-content-center min-h-screen register-bg">
+  <p-toast position="top-right"></p-toast>
+  <div class="register-card">
+    
+    <div class="logo-register"></div>
 
-    <p-toast position="top-right"></p-toast>
+    <h1 class="text-3xl font-bold text-900 mb-2 text-center" style="color: #1f3d66;">Crear cuenta</h1>
+    <p class="text-500 text-lg text-center mb-5">Sistema de Gestión de Becas</p>
 
     <form [formGroup]="registerForm" (ngSubmit)="onSubmit()" class="flex flex-column gap-4">
-      <!-- Nombre completo -->
-      <span class="p-float-label">
-        <input 
-          id="nombre" 
-          type="text" 
-          pInputText 
-          formControlName="nombre"
-          class="w-full" 
-          [class.ng-invalid]="submitted && f['nombre'].errors">
-        <label for="nombre">Nombre completo</label>
-      </span>
-      @if (submitted && f['nombre'].errors) {
-        <small class="p-error">
-          {{ f['nombre'].errors['required'] ? 'El nombre es requerido' : 'Mínimo 3 caracteres' }}
-        </small>
-      }
-
-      <!-- Email y teléfono-->
+      
+      <!-- Fila 1: Nombre y Apellido Paterno -->
       <div class="grid">
         <div class="col-12 md:col-6">
-          <span class="p-float-label w-full">
-            <input 
-              id="email" 
-              type="email" 
-              pInputText 
-              formControlName="email"
-              class="w-full" 
-              [class.ng-invalid]="submitted && f['email'].errors">
-            <label for="email">Correo electrónico</label>
-          </span>
-          @if (submitted && f['email'].errors) {
-            <small class="p-error block mt-1">
-              {{ f['email'].errors['required'] ? 'El correo es requerido' : 'Correo inválido' }}
-            </small>
-          }
-        </div>
-
-        <div class="col-12 md:col-6">
-          <span class="p-float-label w-full">
-            <input 
-              id="telefono" 
-              type="tel" 
-              pInputText 
-              formControlName="telefono"
-              class="w-full" 
-              [class.ng-invalid]="submitted && f['telefono'].errors">
-            <label for="telefono">Teléfono (opcional)</label>
-          </span>
-          @if (submitted && f['telefono'].errors) {
-            <small class="p-error block mt-1">
-              Ingresa 10 dígitos válidos
-            </small>
-          }
-        </div>
-      </div>
-
-      <!-- Contraseña y confirmación -->
-      <div class="grid">
-        <div class="col-12 md:col-6">
-          <span class="p-float-label w-full">
-            <p-password 
-              id="password"
-              formControlName="password"
-              [feedback]="true"
-              [toggleMask]="true"
-              inputStyleClass="w-full"
-              styleClass="w-full"
-              [class.ng-invalid]="submitted && f['password'].errors">
-            </p-password>
-            <label for="password">Contraseña</label>
-          </span>
-          @if (submitted && f['password'].errors) {
-            <small class="p-error block mt-1">
-              {{ f['password'].errors['required'] ? 'La contraseña es requerida' : 'Mínimo 6 caracteres' }}
-            </small>
-          }
-        </div>
-
-        <div class="col-12 md:col-6">
-          <span class="p-float-label w-full">
-            <p-password 
-              id="confirmPassword"
-              formControlName="confirmPassword"
-              [feedback]="false"
-              [toggleMask]="true"
-              inputStyleClass="w-full"
-              styleClass="w-full"
-              [class.ng-invalid]="submitted && (f['confirmPassword'].errors || registerForm.errors?.['passwordMismatch'])">
-            </p-password>
-            <label for="confirmPassword">Confirmar contraseña</label>
-          </span>
-          @if (submitted && registerForm.errors?.['passwordMismatch']) {
-            <small class="p-error block mt-1">
-              Las contraseñas no coinciden
-            </small>
-          }
-        </div>
-      </div>
-
-      <!-- Rol -->
-      <div class="flex align-items-center gap-4">
-        <label class="text-sm font-medium text-600 w-4rem">Rol:</label>
-        <div class="flex gap-3">
-          <div class="flex align-items-center gap-2">
-            <p-radioButton 
-              name="rol" 
-              value="usuario" 
-              formControlName="rol" 
-              inputId="rol_usuario">
-            </p-radioButton>
-            <label for="rol_usuario" class="text-sm">Usuario</label>
+          <div class="flex flex-column gap-2">
+            <label for="nombre" class="text-sm font-medium text-700">Nombre(s)</label>
+            <p-inputgroup>
+              <p-inputgroup-addon>
+                <i class="pi pi-user"></i>
+              </p-inputgroup-addon>
+              <input 
+                pInputText 
+                id="nombre"
+                type="text"
+                formControlName="nombre"
+                placeholder="Ej. Juan Carlos"
+                class="w-full"
+                [class.ng-invalid]="submitted && f['nombre'].errors">
+            </p-inputgroup>
+            @if (submitted && f['nombre'].errors) {
+              <small class="p-error">
+                {{ f['nombre'].errors['required'] ? 'Requerido' : 'Mínimo 3 caracteres' }}
+              </small>
+            }
           </div>
-          <div class="flex align-items-center gap-2">
-            <p-radioButton 
-              name="rol" 
-              value="admin" 
-              formControlName="rol" 
-              inputId="rol_admin">
-            </p-radioButton>
-            <label for="rol_admin" class="text-sm">Administrador</label>
+        </div>
+
+        <div class="col-12 md:col-6">
+          <div class="flex flex-column gap-2">
+            <label for="ap_paterno" class="text-sm font-medium text-700">Apellido paterno</label>
+            <p-inputgroup>
+              <p-inputgroup-addon>
+                <i class="pi pi-user"></i>
+              </p-inputgroup-addon>
+              <input 
+                pInputText 
+                id="ap_paterno"
+                type="text"
+                formControlName="ap_paterno"
+                placeholder="Ej. Pérez"
+                class="w-full"
+                [class.ng-invalid]="submitted && f['ap_paterno'].errors">
+            </p-inputgroup>
+            @if (submitted && f['ap_paterno'].errors) {
+              <small class="p-error">
+                {{ f['ap_paterno'].errors['required'] ? 'Requerido' : 'Mínimo 2 caracteres' }}
+              </small>
+            }
           </div>
         </div>
       </div>
 
-      <!-- Términos y condiciones -->
-      <div class="flex align-items-center gap-2">
-        <p-checkbox 
-          formControlName="acceptTerms" 
-          [binary]="true" 
-          inputId="acceptTerms">
-        </p-checkbox>
-        <label for="acceptTerms" class="text-sm text-600">
-          Acepto los <a class="text-primary font-medium cursor-pointer no-underline">términos y condiciones</a>
-        </label>
+      <!-- Fila 2: Apellido Materno y Teléfono -->
+      <div class="grid">
+        <div class="col-12 md:col-6">
+          <div class="flex flex-column gap-2">
+            <label for="ap_materno" class="text-sm font-medium text-700">Apellido materno</label>
+            <p-inputgroup>
+              <p-inputgroup-addon>
+                <i class="pi pi-user"></i>
+              </p-inputgroup-addon>
+              <input 
+                pInputText 
+                id="ap_materno"
+                type="text"
+                formControlName="ap_materno"
+                placeholder="Ej. García (opcional)"
+                class="w-full">
+            </p-inputgroup>
+          </div>
+        </div>
+
+        <div class="col-12 md:col-6">
+          <div class="flex flex-column gap-2">
+            <label for="telefono" class="text-sm font-medium text-700">Teléfono</label>
+            <p-inputgroup>
+              <p-inputgroup-addon>
+                <i class="pi pi-phone"></i>
+              </p-inputgroup-addon>
+              <input 
+                pInputText 
+                id="telefono"
+                type="tel"
+                formControlName="telefono"
+                placeholder="5512345678"
+                class="w-full"
+                [class.ng-invalid]="submitted && f['telefono'].errors">
+            </p-inputgroup>
+            @if (submitted && f['telefono'].errors) {
+              <small class="p-error">
+                10 dígitos
+              </small>
+            }
+          </div>
+        </div>
       </div>
-      @if (submitted && f['acceptTerms'].errors) {
-        <small class="p-error -mt-2">
-          Debes aceptar los términos
-        </small>
-      }
+
+      <!-- Fila 3: Email -->
+      <div class="grid">
+        <div class="col-12">
+          <div class="flex flex-column gap-2">
+            <label for="email" class="text-sm font-medium text-700">Correo electrónico</label>
+            <p-inputgroup>
+              <p-inputgroup-addon>
+                <i class="pi pi-envelope"></i>
+              </p-inputgroup-addon>
+              <input 
+                pInputText 
+                id="email"
+                type="email"
+                formControlName="email"
+                placeholder="correo@ejemplo.com"
+                autocomplete="off"
+                class="w-full"
+                [class.ng-invalid]="submitted && f['email'].errors">
+            </p-inputgroup>
+            @if (submitted && f['email'].errors) {
+              <small class="p-error">
+                {{ f['email'].errors['required'] ? 'Requerido' : 'Correo inválido' }}
+              </small>
+            }
+          </div>
+        </div>
+      </div>
+
+      <!-- Fila 4: Contraseña y Confirmación -->
+      <div class="grid">
+        <div class="col-12 md:col-6">
+          <div class="flex flex-column gap-2">
+            <label for="password" class="text-sm font-medium text-700">Contraseña</label>
+            <p-inputgroup>
+              <p-inputgroup-addon>
+                <i class="pi pi-lock"></i>
+              </p-inputgroup-addon>
+              <p-password 
+                id="password"
+                formControlName="password"
+                [feedback]="true"
+                [toggleMask]="true"
+                [style]="{'width': '100%'}"
+                inputStyleClass="w-full"
+                [promptLabel]="'Ingresa una contraseña'"
+                [weakLabel]="'Débil'"
+                [mediumLabel]="'Media'"
+                [strongLabel]="'Fuerte'"
+                autocomplete="off"
+                [class.ng-invalid]="submitted && f['password'].errors">
+              </p-password>
+            </p-inputgroup>
+            @if (submitted && f['password'].errors) {
+              <small class="p-error">
+                {{ f['password'].errors['required'] ? 'Requerida' : 'Mínimo 6 caracteres' }}
+              </small>
+            }
+          </div>
+        </div>
+
+        <div class="col-12 md:col-6">
+          <div class="flex flex-column gap-2">
+            <label for="confirmPassword" class="text-sm font-medium text-700">Confirmar</label>
+            <p-inputgroup>
+              <p-inputgroup-addon>
+                <i class="pi pi-lock"></i>
+              </p-inputgroup-addon>
+              <p-password 
+                id="confirmPassword"
+                formControlName="confirmPassword"
+                [feedback]="false"
+                [toggleMask]="true"
+                [style]="{'width': '100%'}"
+                inputStyleClass="w-full"
+                [class.ng-invalid]="submitted && (f['confirmPassword'].errors || registerForm.errors?.['passwordMismatch'])">
+              </p-password>
+            </p-inputgroup>
+            @if (submitted && registerForm.errors?.['passwordMismatch']) {
+              <small class="p-error">
+                No coinciden
+              </small>
+            }
+          </div>
+        </div>
+      </div>
+
+      <!-- Fila 5: Rol y Términos -->
+      <div class="grid align-items-center">
+        <div class="col-12 md:col-6">
+          <div class="flex align-items-center gap-4">
+            <label class="text-sm font-medium text-700">Rol:</label>
+            <div class="flex gap-3">
+              <div class="flex align-items-center gap-2">
+                <p-radioButton 
+                  name="rol" 
+                  value="usuario" 
+                  formControlName="rol" 
+                  inputId="rol_usuario">
+                </p-radioButton>
+                <label for="rol_usuario" class="text-sm text-600 cursor-pointer">Usuario</label>
+              </div>
+              <div class="flex align-items-center gap-2">
+                <p-radioButton 
+                  name="rol" 
+                  value="admin" 
+                  formControlName="rol" 
+                  inputId="rol_admin">
+                </p-radioButton>
+                <label for="rol_admin" class="text-sm text-600 cursor-pointer">Admin</label>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-12 md:col-6">
+          <div class="flex align-items-center gap-2">
+            <p-checkbox 
+              formControlName="acceptTerms" 
+              [binary]="true" 
+              inputId="acceptTerms">
+            </p-checkbox>
+            <label for="acceptTerms" class="text-sm text-600 cursor-pointer">
+              Acepto <a class="text-primary font-medium no-underline" (click)="onTermsClick()">términos</a>
+            </label>
+          </div>
+          @if (submitted && f['acceptTerms'].errors) {
+            <small class="p-error block">
+              Requerido
+            </small>
+          }
+        </div>
+      </div>
 
       <!-- Botones -->
       <p-button 
         type="submit" 
         label="Registrarse" 
-        icon="pi pi-check"
+        icon="pi pi-user-plus"
         [loading]="loading"
         styleClass="w-full p-3 text-lg font-medium"
         [raised]="true">
@@ -177,5 +262,9 @@
         routerLink="/auth/login">
       </p-button>
     </form>
+
+    <div class="text-center mt-4 text-sm text-500">
+      © 2026 Sistema de Becas
+    </div>
   </div>
 </div>

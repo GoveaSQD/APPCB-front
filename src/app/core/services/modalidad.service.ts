@@ -2,20 +2,13 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, catchError, throwError } from 'rxjs';
 import { environment } from '../../../environments/environment';
-import { Modalidad } from '../models/modalidad.model';
-
-export interface ApiResponse<T> {
-  success: boolean;
-  message?: string;
-  data?: T;
-  count?: number;
-}
+import { Modalidad, ApiResponse } from '../models/modalidad.model';
 
 @Injectable({
   providedIn: 'root'
 })
 export class ModalidadService {
-  private apiUrl = `${environment.apiUrl}/modalidades`;  // /api/modalidades
+  private apiUrl = `${environment.apiUrl}/modalidades`;
 
   constructor(private http: HttpClient) {}
 
@@ -32,13 +25,13 @@ export class ModalidadService {
   }
 
   // POST /api/modalidades - Crear
-  create(modalidad: Partial<Modalidad>): Observable<ApiResponse<Modalidad>> {
+  create(modalidad: { tipo: string }): Observable<ApiResponse<Modalidad>> {
     return this.http.post<ApiResponse<Modalidad>>(this.apiUrl, modalidad)
       .pipe(catchError(this.handleError));
   }
 
   // PUT /api/modalidades/:id - Actualizar
-  update(id: number, modalidad: Partial<Modalidad>): Observable<ApiResponse<Modalidad>> {
+  update(id: number, modalidad: { tipo: string }): Observable<ApiResponse<Modalidad>> {
     return this.http.put<ApiResponse<Modalidad>>(`${this.apiUrl}/${id}`, modalidad)
       .pipe(catchError(this.handleError));
   }

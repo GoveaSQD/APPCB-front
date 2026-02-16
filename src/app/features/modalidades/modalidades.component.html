@@ -1,1 +1,158 @@
-<p>modalidades works!</p>
+<div class="card p-4">
+  <p-toast></p-toast>
+  <p-confirmDialog></p-confirmDialog>
+
+  <!-- Toolbar -->
+  <p-toolbar styleClass="mb-4">
+    <ng-template pTemplate="left">
+      <div class="flex flex-wrap gap-2">
+        <p-button 
+          label="Nueva Modalidad" 
+          icon="pi pi-plus" 
+          styleClass="p-button-success"
+          (onClick)="openNew()">
+        </p-button>
+      </div>
+    </ng-template>
+    
+    <ng-template pTemplate="right">
+      <div class="flex flex-wrap gap-2">
+        <p-button 
+          label="Refrescar" 
+          icon="pi pi-refresh" 
+          styleClass="p-button-outlined"
+          (onClick)="loadModalidades()">
+        </p-button>
+      </div>
+    </ng-template>
+  </p-toolbar>
+
+  <!-- Buscador -->
+  <div class="flex justify-content-end mb-3">
+    <span class="p-input-icon-left">
+      <i class="pi pi-search"></i>
+      <input 
+        pInputText 
+        type="text" 
+        [(ngModel)]="searchText" 
+        placeholder="Buscar modalidad..." 
+        class="p-2">
+    </span>
+  </div>
+
+  <!-- Tabla de modalidades -->
+  <p-table 
+    [value]="filteredModalidades" 
+    [loading]="loading"
+    [paginator]="true" 
+    [rows]="10"
+    [showCurrentPageReport]="true"
+    currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} modalidades"
+    [rowsPerPageOptions]="[10, 25, 50]"
+    responsiveLayout="stack"
+    styleClass="p-datatable-striped">
+    
+    <ng-template pTemplate="header">
+      <tr>
+        <th>ID</th>
+        <th>Tipo de Modalidad</th>
+        <th style="width: 120px">Acciones</th>
+      </tr>
+    </ng-template>
+    
+    <ng-template pTemplate="body" let-modalidad>
+      <tr>
+        <td>{{ modalidad.id_modalidad }}</td>
+        <td class="font-bold">{{ modalidad.tipo }}</td>
+        <td>
+          <div class="flex gap-2">
+            <p-button 
+              icon="pi pi-pencil" 
+              styleClass="p-button-rounded p-button-text p-button-warning"
+              (onClick)="editModalidad(modalidad)">
+            </p-button>
+            <p-button 
+              icon="pi pi-trash" 
+              styleClass="p-button-rounded p-button-text p-button-danger"
+              (onClick)="deleteModalidad(modalidad)">
+            </p-button>
+          </div>
+        </td>
+      </tr>
+    </ng-template>
+    
+    <ng-template pTemplate="emptymessage">
+      <tr>
+        <td colspan="3" class="text-center p-5">
+          <i class="pi pi-tags text-4xl text-gray-400 mb-3 block"></i>
+          <p class="text-gray-500">No hay modalidades registradas</p>
+          <p-button 
+            label="Crear primera modalidad" 
+            icon="pi pi-plus"
+            styleClass="p-button-outlined mt-3"
+            (onClick)="openNew()">
+          </p-button>
+        </td>
+      </tr>
+    </ng-template>
+  </p-table>
+
+  <!-- Diálogo para crear/editar -->
+  <p-dialog 
+    [(visible)]="modalidadDialog" 
+    [style]="{width: '450px'}" 
+    [modal]="true"
+    [draggable]="false" 
+    [resizable]="false"
+    header="{{ editingModalidad ? 'Editar Modalidad' : 'Nueva Modalidad' }}"
+    [closable]="!loading">
+    
+    <form [formGroup]="modalidadForm">
+      <div class="flex flex-column gap-3">
+        <div class="field">
+          <label for="tipo" class="block font-medium mb-2">
+            Tipo de Modalidad <span class="text-red-500">*</span>
+          </label>
+          <input 
+            pInputText 
+            id="tipo" 
+            formControlName="tipo" 
+            class="w-full"
+            placeholder="Ej: Beca Académica, Beca Deportiva, etc."
+            [class.ng-invalid]="submitted && modalidadForm.get('tipo')?.invalid">
+          @if (submitted && modalidadForm.get('tipo')?.invalid) {
+            <small class="p-error block mt-1">
+              @if (modalidadForm.get('tipo')?.errors?.['required']) {
+                El tipo es requerido
+              }
+              @if (modalidadForm.get('tipo')?.errors?.['minlength']) {
+                Mínimo 3 caracteres
+              }
+              @if (modalidadForm.get('tipo')?.errors?.['maxlength']) {
+                Máximo 100 caracteres
+              }
+            </small>
+          }
+        </div>
+      </div>
+    </form>
+    
+    <ng-template pTemplate="footer">
+      <div class="flex justify-content-end gap-2">
+        <p-button 
+          label="Cancelar" 
+          icon="pi pi-times" 
+          styleClass="p-button-text"
+          [disabled]="loading"
+          (onClick)="hideDialog()">
+        </p-button>
+        <p-button 
+          label="Guardar" 
+          icon="pi pi-check" 
+          [loading]="loading"
+          (onClick)="saveModalidad()">
+        </p-button>
+      </div>
+    </ng-template>
+  </p-dialog>
+</div>
