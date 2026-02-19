@@ -2,20 +2,13 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, catchError, throwError } from 'rxjs';
 import { environment } from '../../../environments/environment';
-import { Universidad } from '../models/universidad.model';
-
-export interface ApiResponse<T> {
-  success: boolean;
-  message?: string;
-  data?: T;
-  count?: number;
-}
+import { Universidad, ApiResponse } from '../models/universidad.model';
 
 @Injectable({
   providedIn: 'root'
 })
 export class UniversidadService {
-  private apiUrl = `${environment.apiUrl}/universidades`;  // /api/universidades
+  private apiUrl = `${environment.apiUrl}/universidades`;
 
   constructor(private http: HttpClient) {}
 

@@ -1,7 +1,16 @@
 export interface Universidad {
-  id?: number;
+  id_universidad?: number;
   nombre: string;
-  ciudad?: string;
-  pais?: string;
+  ciudad: string;        // Ahora es NOT NULL
+  pais: string;          // Ahora es NOT NULL
+  estado?: string;       // Opcional
+  estatus: boolean;      // Cambió de 'activo' a 'estatus'
   fechaCreacion?: Date;
+}
+
+export interface ApiResponse<T> {
+  success: boolean;
+  message?: string;
+  data?: T;
+  count?: number;
 }
