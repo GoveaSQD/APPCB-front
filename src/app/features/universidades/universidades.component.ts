@@ -77,11 +77,11 @@ export class UniversidadesComponent implements OnInit {
     private confirmationService: ConfirmationService
   ) {
     this.universidadForm = this.fb.group({
-      nombre: ['', [Validators.required, Validators.minLength(3), Validators.maxLength(150)]],
+      nombre: ['', [Validators.required, Validators.minLength(3)]],
       ciudad: ['', Validators.required],
       pais: ['', Validators.required],
       estado: [''],
-      estatus: [true]  // Cambiado de 'activo' a 'estatus'
+      estatus: [true]  // Ahora es booleano para el checkbox
     });
   }
 
@@ -173,8 +173,11 @@ export class UniversidadesComponent implements OnInit {
       return;
     }
 
-    const universidadData = this.universidadForm.value;
-
+    const universidadData = {
+      ...this.universidadForm.value,
+      estatus: this.universidadForm.value.estatus ? 1 : 2
+    };
+    
     if (this.editingUniversidad) {
       // Actualizar
       this.universidadService.update(this.editingUniversidad.id_universidad!, universidadData).subscribe({
@@ -226,8 +229,16 @@ export class UniversidadesComponent implements OnInit {
     }
   }
 
-  getSeverity(estatus: boolean): 'success' | 'danger' {
-    return estatus ? 'success' : 'danger';
+  getSeverity(estatus: number): 'success' | 'danger' {
+    return estatus === 1 ? 'success' : 'danger';
+  }
+
+  getEstatusText(estatus: number): string {
+    return estatus === 1 ? 'Activo' : 'Inactivo';
+  }
+
+  getEstatusSeverity(estatus: number): 'success' | 'danger' {
+    return estatus === 1 ? 'success' : 'danger';
   }
 
   // Filtro para búsqueda

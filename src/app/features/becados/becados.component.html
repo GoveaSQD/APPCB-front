@@ -1,1 +1,508 @@
-<p>becados works!</p>
+<div class="card p-4">
+  <p-toast></p-toast>
+  <p-confirmDialog></p-confirmDialog>
+
+  <!-- Toolbar -->
+  <p-toolbar styleClass="mb-4">
+    <ng-template pTemplate="left">
+      <div class="flex flex-wrap gap-2">
+        <p-button 
+          label="Nuevo Becado" 
+          icon="pi pi-user-plus" 
+          styleClass="p-button-success"
+          (onClick)="openNew()">
+        </p-button>
+      </div>
+    </ng-template>
+    
+    <ng-template pTemplate="right">
+      <div class="flex flex-wrap gap-2">
+        <p-button 
+          label="Refrescar" 
+          icon="pi pi-refresh" 
+          styleClass="p-button-outlined"
+          (onClick)="loadBecados()">
+        </p-button>
+      </div>
+    </ng-template>
+  </p-toolbar>
+
+  <!-- Buscador -->
+  <div class="flex justify-content-end mb-3">
+    <span class="p-input-icon-left">
+      <i class="pi pi-search"></i>
+      <input 
+        pInputText 
+        type="text" 
+        [(ngModel)]="searchText" 
+        placeholder="Buscar becado..." 
+        class="p-2">
+    </span>
+  </div>
+
+  <!-- Tabla de becados -->
+  <p-table 
+    [value]="filteredBecados" 
+    [loading]="loading"
+    [paginator]="true" 
+    [rows]="10"
+    [showCurrentPageReport]="true"
+    currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} becados"
+    [rowsPerPageOptions]="[10, 25, 50]"
+    responsiveLayout="stack"
+    styleClass="p-datatable-striped">
+    
+    <ng-template pTemplate="header">
+      <tr>
+        <th>ID</th>
+        <th>Nombre Completo</th>
+        <th>Carrera</th>
+        <th>Universidad</th>
+        <th>Modalidad</th>
+        <th>Monto Autorizado</th>
+        <th>Erogado</th>
+        <th>Estatus</th>
+        <th style="width: 120px">Acciones</th>
+      </tr>
+    </ng-template>
+    
+    <ng-template pTemplate="body" let-becado>
+      <tr>
+        <td>{{ becado.id_becado }}</td>
+        <td class="font-bold">{{ becado.nombre_completo }}</td>
+        <td>{{ becado.carrera }}</td>
+        <td>{{ becado.universidad_nombre || 'N/A' }}</td>
+        <td>{{ becado.modalidad_tipo || 'N/A' }}</td>
+        <td class="font-bold text-primary">{{ formatCurrency(becado.monto_autorizado) }}</td>
+        <td>{{ formatCurrency(becado.erogado) }}</td>
+        <td>
+          <p-tag 
+            [severity]="getEstatusSeverity(becado.estatus)"
+            [value]="becado.estatus ? 'Activo' : 'Inactivo'">
+          </p-tag>
+        </td>
+        <td>
+          <div class="flex gap-2">
+            <p-button 
+              icon="pi pi-pencil" 
+              styleClass="p-button-rounded p-button-text p-button-warning"
+              (onClick)="editBecado(becado)">
+            </p-button>
+            <p-button 
+              icon="pi pi-trash" 
+              styleClass="p-button-rounded p-button-text p-button-danger"
+              (onClick)="deleteBecado(becado)">
+            </p-button>
+          </div>
+        </td>
+      </tr>
+    </ng-template>
+    
+    <ng-template pTemplate="emptymessage">
+      <tr>
+        <td colspan="9" class="text-center p-5">
+          <i class="pi pi-users text-4xl text-gray-400 mb-3 block"></i>
+          <p class="text-gray-500">No hay becados registrados</p>
+          <p-button 
+            label="Crear primer becado" 
+            icon="pi pi-plus"
+            styleClass="p-button-outlined mt-3"
+            (onClick)="openNew()">
+          </p-button>
+        </td>
+      </tr>
+    </ng-template>
+  </p-table>
+
+  <!-- Diálogo para crear/editar (BECADO COMPLETO) -->
+  <p-dialog 
+    [(visible)]="becadoDialog" 
+    [style]="{width: '800px'}" 
+    [modal]="true"
+    [draggable]="false" 
+    [resizable]="false"
+    header="{{ editingBecado ? 'Editar Becado' : 'Nuevo Becado' }}"
+    [closable]="!loading"
+    [maximizable]="true">
+    
+    <form [formGroup]="becadoForm">
+      <!-- SECCIÓN 1: DATOS PERSONALES -->
+      <p-fieldset legend="Datos Personales" [toggleable]="true" [collapsed]="false" class="mb-4">
+        <div class="grid">
+          <!-- Apellido Paterno -->
+          <div class="col-12 md:col-4">
+            <div class="field">
+              <label for="apellido_p" class="block font-medium mb-2">
+                Apellido Paterno <span class="text-red-500">*</span>
+              </label>
+              <input 
+                pInputText 
+                id="apellido_p" 
+                formControlName="apellido_p" 
+                class="w-full"
+                placeholder="Ej: García"
+                [class.ng-invalid]="submitted && becadoForm.get('apellido_p')?.invalid">
+              @if (submitted && becadoForm.get('apellido_p')?.invalid) {
+                <small class="p-error block mt-1">
+                  @if (becadoForm.get('apellido_p')?.errors?.['required']) {
+                    El apellido paterno es requerido
+                  }
+                  @if (becadoForm.get('apellido_p')?.errors?.['minlength']) {
+                    Mínimo 2 caracteres
+                  }
+                </small>
+              }
+            </div>
+          </div>
+
+          <!-- Apellido Materno -->
+          <div class="col-12 md:col-4">
+            <div class="field">
+              <label for="apellido_m" class="block font-medium mb-2">Apellido Materno</label>
+              <input 
+                pInputText 
+                id="apellido_m" 
+                formControlName="apellido_m" 
+                class="w-full"
+                placeholder="Ej: López">
+            </div>
+          </div>
+
+          <!-- Nombre -->
+          <div class="col-12 md:col-4">
+            <div class="field">
+              <label for="nombre" class="block font-medium mb-2">
+                Nombre <span class="text-red-500">*</span>
+              </label>
+              <input 
+                pInputText 
+                id="nombre" 
+                formControlName="nombre" 
+                class="w-full"
+                placeholder="Ej: Juan"
+                [class.ng-invalid]="submitted && becadoForm.get('nombre')?.invalid">
+              @if (submitted && becadoForm.get('nombre')?.invalid) {
+                <small class="p-error block mt-1">
+                  @if (becadoForm.get('nombre')?.errors?.['required']) {
+                    El nombre es requerido
+                  }
+                  @if (becadoForm.get('nombre')?.errors?.['minlength']) {
+                    Mínimo 2 caracteres
+                  }
+                </small>
+              }
+            </div>
+          </div>
+
+          <!-- Carrera -->
+          <div class="col-12 md:col-8">
+            <div class="field">
+              <label for="carrera" class="block font-medium mb-2">
+                Carrera <span class="text-red-500">*</span>
+              </label>
+              <input 
+                pInputText 
+                id="carrera" 
+                formControlName="carrera" 
+                class="w-full"
+                placeholder="Ej: Ingeniería en Sistemas Computacionales"
+                [class.ng-invalid]="submitted && becadoForm.get('carrera')?.invalid">
+              @if (submitted && becadoForm.get('carrera')?.invalid) {
+                <small class="p-error block mt-1">La carrera es requerida</small>
+              }
+            </div>
+          </div>
+
+          <!-- Estatus -->
+          <div class="col-12 md:col-4">
+            <div class="field">
+              <label for="estatus" class="block font-medium mb-2">Estatus</label>
+              <p-dropdown 
+                id="estatus"
+                formControlName="estatus"
+                [options]="estatusOptions"
+                optionLabel="label"
+                optionValue="value"
+                placeholder="Selecciona estatus"
+                styleClass="w-full">
+              </p-dropdown>
+            </div>
+          </div>
+        </div>
+      </p-fieldset>
+
+      <!-- SECCIÓN 2: ASIGNACIÓN ACADÉMICA -->
+      <p-fieldset legend="Asignación Académica" [toggleable]="true" [collapsed]="false" class="mb-4">
+        <div class="grid">
+          <!-- Universidad -->
+          <div class="col-12 md:col-6">
+            <div class="field">
+              <label for="id_universidad" class="block font-medium mb-2">
+                Universidad <span class="text-red-500">*</span>
+              </label>
+              <p-dropdown 
+                id="id_universidad"
+                formControlName="id_universidad"
+                [options]="universidades"
+                optionLabel="nombre"
+                optionValue="id_universidad"
+                [filter]="true"
+                placeholder="Selecciona una universidad"
+                styleClass="w-full"
+                [showClear]="false"
+                [class.ng-invalid]="submitted && becadoForm.get('id_universidad')?.invalid">
+              </p-dropdown>
+              @if (submitted && becadoForm.get('id_universidad')?.invalid) {
+                <small class="p-error block mt-1">La universidad es requerida</small>
+              }
+            </div>
+          </div>
+
+          <!-- Modalidad -->
+          <div class="col-12 md:col-6">
+            <div class="field">
+              <label for="id_modalidad" class="block font-medium mb-2">
+                Modalidad <span class="text-red-500">*</span>
+              </label>
+              <p-dropdown 
+                id="id_modalidad"
+                formControlName="id_modalidad"
+                [options]="modalidades"
+                optionLabel="tipo"
+                optionValue="id_modalidad"
+                [filter]="true"
+                placeholder="Selecciona una modalidad"
+                styleClass="w-full"
+                [showClear]="false"
+                [class.ng-invalid]="submitted && becadoForm.get('id_modalidad')?.invalid">
+              </p-dropdown>
+              @if (submitted && becadoForm.get('id_modalidad')?.invalid) {
+                <small class="p-error block mt-1">La modalidad es requerida</small>
+              }
+            </div>
+          </div>
+        </div>
+      </p-fieldset>
+
+      <!-- SECCIÓN 3: MONTOS Y FINANZAS -->
+      <p-fieldset legend="Información Financiera" [toggleable]="true" [collapsed]="false" class="mb-4">
+        <div class="grid">
+          <!-- Monto Autorizado -->
+          <div class="col-12 md:col-4">
+            <div class="field">
+              <label for="monto_autorizado" class="block font-medium mb-2">
+                Monto Autorizado <span class="text-red-500">*</span>
+              </label>
+              <span class="p-input-icon-left w-full">
+                <i class="pi pi-dollar"></i>
+                <p-inputNumber 
+                  id="monto_autorizado"
+                  formControlName="monto_autorizado"
+                  mode="currency"
+                  currency="MXN"
+                  locale="es-MX"
+                  class="w-full"
+                  [class.ng-invalid]="submitted && becadoForm.get('monto_autorizado')?.invalid">
+                </p-inputNumber>
+              </span>
+              @if (submitted && becadoForm.get('monto_autorizado')?.invalid) {
+                <small class="p-error block mt-1">
+                  @if (becadoForm.get('monto_autorizado')?.errors?.['required']) {
+                    El monto autorizado es requerido
+                  }
+                  @if (becadoForm.get('monto_autorizado')?.errors?.['min']) {
+                    El monto debe ser mayor a 0
+                  }
+                </small>
+              }
+            </div>
+          </div>
+
+          <!-- Erogado -->
+          <div class="col-12 md:col-4">
+            <div class="field">
+              <label for="erogado" class="block font-medium mb-2">
+                Erogado <span class="text-red-500">*</span>
+              </label>
+              <span class="p-input-icon-left w-full">
+                <i class="pi pi-dollar"></i>
+                <p-inputNumber 
+                  id="erogado"
+                  formControlName="erogado"
+                  mode="currency"
+                  currency="MXN"
+                  locale="es-MX"
+                  class="w-full"
+                  [class.ng-invalid]="submitted && becadoForm.get('erogado')?.invalid">
+                </p-inputNumber>
+              </span>
+              @if (submitted && becadoForm.get('erogado')?.invalid) {
+                <small class="p-error block mt-1">
+                  @if (becadoForm.get('erogado')?.errors?.['required']) {
+                    El monto erogado es requerido
+                  }
+                  @if (becadoForm.get('erogado')?.errors?.['min']) {
+                    El monto debe ser mayor o igual a 0
+                  }
+                </small>
+              }
+            </div>
+          </div>
+
+          <!-- Pendiente por Erogar -->
+          <div class="col-12 md:col-4">
+            <div class="field">
+              <label for="pendiente_erogar" class="block font-medium mb-2">
+                Pendiente por Erogar <span class="text-red-500">*</span>
+              </label>
+              <span class="p-input-icon-left w-full">
+                <i class="pi pi-dollar"></i>
+                <p-inputNumber 
+                  id="pendiente_erogar"
+                  formControlName="pendiente_erogar"
+                  mode="currency"
+                  currency="MXN"
+                  locale="es-MX"
+                  class="w-full"
+                  [class.ng-invalid]="submitted && becadoForm.get('pendiente_erogar')?.invalid">
+                </p-inputNumber>
+              </span>
+              @if (submitted && becadoForm.get('pendiente_erogar')?.invalid) {
+                <small class="p-error block mt-1">
+                  @if (becadoForm.get('pendiente_erogar')?.errors?.['required']) {
+                    El monto pendiente es requerido
+                  }
+                  @if (becadoForm.get('pendiente_erogar')?.errors?.['min']) {
+                    El monto debe ser mayor o igual a 0
+                  }
+                </small>
+              }
+            </div>
+          </div>
+        </div>
+
+        <p-divider align="left">
+          <span class="font-medium">Montos por período</span>
+        </p-divider>
+
+        <div class="grid">
+          <!-- Monto 1 -->
+          <div class="col-12 md:col-4 lg:col-2">
+            <div class="field">
+              <label for="monto_1" class="block font-medium mb-2">Monto 1</label>
+              <p-inputNumber 
+                id="monto_1"
+                formControlName="monto_1"
+                mode="currency"
+                currency="MXN"
+                locale="es-MX"
+                class="w-full">
+              </p-inputNumber>
+            </div>
+          </div>
+
+          <!-- Monto 2 -->
+          <div class="col-12 md:col-4 lg:col-2">
+            <div class="field">
+              <label for="monto_2" class="block font-medium mb-2">Monto 2</label>
+              <p-inputNumber 
+                id="monto_2"
+                formControlName="monto_2"
+                mode="currency"
+                currency="MXN"
+                locale="es-MX"
+                class="w-full">
+              </p-inputNumber>
+            </div>
+          </div>
+
+          <!-- Monto 3 -->
+          <div class="col-12 md:col-4 lg:col-2">
+            <div class="field">
+              <label for="monto_3" class="block font-medium mb-2">Monto 3</label>
+              <p-inputNumber 
+                id="monto_3"
+                formControlName="monto_3"
+                mode="currency"
+                currency="MXN"
+                locale="es-MX"
+                class="w-full">
+              </p-inputNumber>
+            </div>
+          </div>
+
+          <!-- Monto 4 -->
+          <div class="col-12 md:col-4 lg:col-2">
+            <div class="field">
+              <label for="monto_4" class="block font-medium mb-2">Monto 4</label>
+              <p-inputNumber 
+                id="monto_4"
+                formControlName="monto_4"
+                mode="currency"
+                currency="MXN"
+                locale="es-MX"
+                class="w-full">
+              </p-inputNumber>
+            </div>
+          </div>
+
+          <!-- Monto 5 -->
+          <div class="col-12 md:col-4 lg:col-2">
+            <div class="field">
+              <label for="monto_5" class="block font-medium mb-2">Monto 5</label>
+              <p-inputNumber 
+                id="monto_5"
+                formControlName="monto_5"
+                mode="currency"
+                currency="MXN"
+                locale="es-MX"
+                class="w-full">
+              </p-inputNumber>
+            </div>
+          </div>
+
+          <!-- Monto 6 -->
+          <div class="col-12 md:col-4 lg:col-2">
+            <div class="field">
+              <label for="monto_6" class="block font-medium mb-2">Monto 6</label>
+              <p-inputNumber 
+                id="monto_6"
+                formControlName="monto_6"
+                mode="currency"
+                currency="MXN"
+                locale="es-MX"
+                class="w-full">
+              </p-inputNumber>
+            </div>
+          </div>
+        </div>
+
+        <!-- Resumen automático -->
+        <div class="bg-blue-50 p-3 border-round mt-3">
+          <div class="flex justify-content-between">
+            <span class="font-medium">Total períodos:</span>
+            <span class="font-bold">{{ formatCurrency(calcularTotalErogado()) }}</span>
+          </div>
+        </div>
+      </p-fieldset>
+    </form>
+    
+    <ng-template pTemplate="footer">
+      <div class="flex justify-content-end gap-2">
+        <p-button 
+          label="Cancelar" 
+          icon="pi pi-times" 
+          styleClass="p-button-text"
+          [disabled]="loading"
+          (onClick)="hideDialog()">
+        </p-button>
+        <p-button 
+          label="Guardar" 
+          icon="pi pi-check" 
+          [loading]="loading"
+          (onClick)="saveBecado()">
+        </p-button>
+      </div>
+    </ng-template>
+  </p-dialog>
+</div>

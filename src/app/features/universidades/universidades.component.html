@@ -58,7 +58,7 @@
         <th>Nombre</th>
         <th>Ciudad</th>
         <th>País</th>
-        <th>Estado</th>
+        <th>Estado/Provincia</th>
         <th>Estatus</th>
         <th style="width: 120px">Acciones</th>
       </tr>
@@ -74,7 +74,7 @@
         <td>
           <p-tag 
             [severity]="getSeverity(universidad.estatus)"
-            [value]="universidad.estatus ? 'Activo' : 'Inactivo'">
+            [value]="getEstatusText(universidad.estatus)">
           </p-tag>
         </td>
         <td>
@@ -171,16 +171,13 @@
               <label for="pais" class="block font-medium mb-2">
                 País <span class="text-red-500">*</span>
               </label>
-              <p-dropdown 
-                id="pais"
-                formControlName="pais"
-                [options]="paises"
-                [filter]="true"
-                placeholder="Selecciona un país"
-                styleClass="w-full"
-                [showClear]="true"
+              <input 
+                pInputText 
+                id="pais" 
+                formControlName="pais" 
+                class="w-full"
+                placeholder="Ej: México"
                 [class.ng-invalid]="submitted && universidadForm.get('pais')?.invalid">
-              </p-dropdown>
               @if (submitted && universidadForm.get('pais')?.invalid) {
                 <small class="p-error block mt-1">El país es requerido</small>
               }
@@ -190,15 +187,15 @@
 
         <!-- Estado (opcional) -->
         <div class="field">
-          <label for="estado" class="block font-medium mb-2">Estatus</label>
-          <p-dropdown 
-            id="estado"
-            formControlName="estado"
-            [options]="estados"
-            placeholder="Selecciona un estado"
-            styleClass="w-full"
-            [showClear]="true">
-          </p-dropdown>
+          <label for="estado" class="block font-medium mb-2">
+            Estado / Provincia <span class="text-500 text-sm">(opcional)</span>
+          </label>
+          <input 
+            pInputText 
+            id="estado" 
+            formControlName="estado" 
+            class="w-full"
+            placeholder="Ej: CDMX, California, Madrid, etc.">
         </div>
 
         <!-- Estatus activo -->
@@ -211,6 +208,9 @@
             </p-checkbox>
             <label for="estatus" class="font-medium">Universidad activa</label>
           </div>
+          <small class="text-500 block mt-1">
+            Si está activa, estará disponible para asignar becados
+          </small>
         </div>
       </div>
     </form>
