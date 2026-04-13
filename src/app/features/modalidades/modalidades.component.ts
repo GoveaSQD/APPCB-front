@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { RouterModule } from '@angular/router';
+import { FormsModule } from '@angular/forms';
 
 // PrimeNG Modules
 import { TableModule } from 'primeng/table';
@@ -11,14 +12,15 @@ import { InputTextModule } from 'primeng/inputtext';
 import { ToastModule } from 'primeng/toast';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { ToolbarModule } from 'primeng/toolbar';
+import { TagModule } from 'primeng/tag';
 import { IconFieldModule } from 'primeng/iconfield';
 import { InputIconModule } from 'primeng/inputicon';
 import { MessageService } from 'primeng/api';
 import { ConfirmationService } from 'primeng/api';
-import { FormsModule } from '@angular/forms';
 
 // Services
 import { ModalidadService } from '../../core/services/modalidad.service';
+import { AnioService } from '../../core/services/anio.service';
 import { Modalidad } from '../../core/models/modalidad.model';
 
 @Component({
@@ -27,6 +29,7 @@ import { Modalidad } from '../../core/models/modalidad.model';
   imports: [
     CommonModule,
     ReactiveFormsModule,
+    FormsModule,
     RouterModule,
     TableModule,
     ButtonModule,
@@ -35,9 +38,9 @@ import { Modalidad } from '../../core/models/modalidad.model';
     ToastModule,
     ConfirmDialogModule,
     ToolbarModule,
+    TagModule,
     IconFieldModule,
-    InputIconModule,
-    FormsModule
+    InputIconModule
   ],
   providers: [MessageService, ConfirmationService],
   templateUrl: './modalidades.component.html',
@@ -52,62 +55,45 @@ export class ModalidadesComponent implements OnInit {
   editingModalidad: Modalidad | null = null;
   searchText: string = '';
 
+  anioSeleccionado: number = new Date().getFullYear();
+
   constructor(
     private modalidadService: ModalidadService,
     private fb: FormBuilder,
     private messageService: MessageService,
-    private confirmationService: ConfirmationService
+    private confirmationService: ConfirmationService,
+    private anioService: AnioService
   ) {
     this.modalidadForm = this.fb.group({
       tipo: ['', [Validators.required, Validators.minLength(3), Validators.maxLength(100)]]
     });
+
+    // Suscripción al año
+    this.anioService.anio$.subscribe(anio => {
+      this.anioSeleccionado = anio;
+      this.loadModalidades();
+    });
   }
 
   ngOnInit(): void {
-    this.loadModalidades();
+    // No llamar aquí porque ya se llama en la suscripción
   }
 
   loadModalidades(): void {
     this.loading = true;
-    
-    // Verificar token antes de la petición
-    const token = localStorage.getItem('auth_token');
-    console.log('Token antes de petición:', token ? 'Presente' : 'No presente');
-    
+    // Temporal: llamar sin año hasta que backend esté listo
     this.modalidadService.getAll().subscribe({
       next: (response) => {
-        console.log('Respuesta del servidor:', response);
-        if (response.success) {
-          this.modalidades = response.data || [];
-        } else {
-          this.messageService.add({
-            severity: 'error',
-            summary: 'Error',
-            detail: response.message || 'Error al cargar modalidades',
-            life: 5000
-          });
-        }
+        this.modalidades = response.data || [];
         this.loading = false;
       },
       error: (error) => {
-        console.error('Error completo:', error);
-        
-        // Ver qué dice el error
-        if (error.status === 401) {
-          this.messageService.add({
-            severity: 'warn',
-            summary: 'Sesión expirada',
-            detail: 'Por favor, inicia sesión nuevamente',
-            life: 5000
-          });
-        } else {
-          this.messageService.add({
-            severity: 'error',
-            summary: 'Error',
-            detail: error.error?.message || 'No se pudieron cargar las modalidades',
-            life: 5000
-          });
-        }
+        this.messageService.add({
+          severity: 'error',
+          summary: 'Error',
+          detail: 'No se pudieron cargar las modalidades',
+          life: 5000
+        });
         this.loading = false;
       }
     });
@@ -177,7 +163,6 @@ export class ModalidadesComponent implements OnInit {
     const modalidadData = { tipo: this.modalidadForm.value.tipo };
 
     if (this.editingModalidad) {
-      // Actualizar
       this.modalidadService.update(this.editingModalidad.id_modalidad!, modalidadData).subscribe({
         next: (response) => {
           if (response.success) {
@@ -201,7 +186,6 @@ export class ModalidadesComponent implements OnInit {
         }
       });
     } else {
-      // Crear nueva
       this.modalidadService.create(modalidadData).subscribe({
         next: (response) => {
           if (response.success) {
@@ -227,7 +211,6 @@ export class ModalidadesComponent implements OnInit {
     }
   }
 
-  // Filtro para búsqueda
   get filteredModalidades(): Modalidad[] {
     if (!this.searchText) return this.modalidades;
     
@@ -235,5 +218,15 @@ export class ModalidadesComponent implements OnInit {
     return this.modalidades.filter(m => 
       m.tipo.toLowerCase().includes(searchLower)
     );
+  }
+
+  refrescar(): void {
+    this.loadModalidades();
+    this.messageService.add({
+      severity: 'success',
+      summary: 'Actualizado',
+      detail: 'Datos actualizados correctamente',
+      life: 2000
+    });
   }
 }

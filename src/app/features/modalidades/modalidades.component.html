@@ -21,7 +21,7 @@
           label="Refrescar" 
           icon="pi pi-refresh" 
           styleClass="p-button-outlined"
-          (onClick)="loadModalidades()">
+          (onClick)="refrescar()">
         </p-button>
       </div>
     </ng-template>
@@ -104,8 +104,7 @@
     [modal]="true"
     [draggable]="false" 
     [resizable]="false"
-    header="{{ editingModalidad ? 'Editar Modalidad' : 'Nueva Modalidad' }}"
-    [closable]="!loading">
+    header="{{ editingModalidad ? 'Editar Modalidad' : 'Nueva Modalidad' }}">
     
     <form [formGroup]="modalidadForm">
       <div class="flex flex-column gap-3">
@@ -143,13 +142,11 @@
           label="Cancelar" 
           icon="pi pi-times" 
           styleClass="p-button-text"
-          [disabled]="loading"
           (onClick)="hideDialog()">
         </p-button>
         <p-button 
           label="Guardar" 
           icon="pi pi-check" 
-          [loading]="loading"
           (onClick)="saveModalidad()">
         </p-button>
       </div>

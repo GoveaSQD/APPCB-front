@@ -1,0 +1,37 @@
+<div class="surface-section px-4 py-3 flex align-items-center justify-content-between border-bottom-1 surface-border">
+  <div class="flex align-items-center">
+    <div class="bg-primary border-circle flex align-items-center justify-content-center mr-2" style="width: 40px; height: 40px;">
+      <i class="pi pi-graduation-cap text-white text-xl"></i>
+    </div>
+    <span class="font-bold text-xl">Sistema de Becas</span>
+  </div>
+  
+  <div class="flex align-items-center gap-3">
+    <!-- Selector de año -->
+    <div class="field">
+      <p-dropdown 
+        [(ngModel)]="anioSeleccionado"
+        [options]="aniosDisponibles"
+        (onChange)="cambiarAnio()"
+        styleClass="p-inputtext-sm"
+        placeholder="Seleccionar año">
+      </p-dropdown>
+    </div>
+
+    <div class="flex align-items-center gap-2">
+      <span class="hidden md:block text-600">{{ usuario?.nombre }}</span>
+      <p-avatar 
+        [label]="usuario?.nombre?.charAt(0)?.toUpperCase() || 'U'" 
+        styleClass="mr-2 cursor-pointer"
+        shape="circle"
+        [style]="{'background-color': '#1f3d66', 'color': '#ffffff'}"
+        (click)="menu.toggle($event)">
+      </p-avatar>
+      <p-menu #menu [model]="[
+        { label: 'Mi Perfil', icon: 'pi pi-user', command: () => this.router.navigate(['/perfil']) },
+        { separator: true },
+        { label: 'Cerrar Sesión', icon: 'pi pi-sign-out', command: () => this.logout() }
+      ]" [popup]="true"></p-menu>
+    </div>
+  </div>
+</div>

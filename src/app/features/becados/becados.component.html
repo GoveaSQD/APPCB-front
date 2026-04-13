@@ -3,6 +3,17 @@
   <div class="flex justify-content-between align-items-center mb-4">
     <h1 class="text-3xl font-bold text-900">Gestión de Becados</h1>
     <div class="flex gap-2">
+        <!-- Selector de año -->
+      <div class="field">
+        <label for="anio" class="text-sm font-medium">Año</label>
+        <p-dropdown 
+          id="anio"
+          [(ngModel)]="anioSeleccionado"
+          [options]="aniosDisponibles"
+          (onChange)="cambiarAnio()"
+          styleClass="p-inputtext-sm">
+        </p-dropdown>
+      </div>
       <p-button 
         label="Refrescar" 
         icon="pi pi-refresh" 

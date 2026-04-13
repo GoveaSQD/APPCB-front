@@ -27,10 +27,12 @@ import { ConfirmationService } from 'primeng/api';
 import { BecadoService } from '../../core/services/becado.service';
 import { UniversidadService } from '../../core/services/universidad.service';
 import { ModalidadService } from '../../core/services/modalidad.service';
-import { Becado } from '../../core/models/becado.model';
+import { AnioService } from '../../core/services/anio.service';
+
+// Models
+import { Becado, Pago } from '../../core/models/becado.model';
 import { Universidad } from '../../core/models/universidad.model';
 import { Modalidad } from '../../core/models/modalidad.model';
-import { Pago } from '../../core/models/becado.model';
 
 export interface BecadoResumen {
   id_becado: number;
@@ -102,6 +104,7 @@ export class BecadosComponent implements OnInit {
   // ============== FILTROS ==============
   searchText: string = '';
   filtroTipoInactivo: string = 'todos';
+  anioSeleccionado: number = new Date().getFullYear(); // ← INICIALIZADO
 
   // ============== OPCIONES ==============
   estatusOptions = [
@@ -124,7 +127,8 @@ export class BecadosComponent implements OnInit {
     private fb: FormBuilder,
     private messageService: MessageService,
     private confirmationService: ConfirmationService,
-    private router: Router
+    private router: Router,
+    private anioService: AnioService
   ) {
     this.becadoForm = this.fb.group({
       nombre: ['', [Validators.required, Validators.minLength(2)]],
@@ -139,11 +143,17 @@ export class BecadosComponent implements OnInit {
       erogado: ['', [Validators.required, Validators.min(0)]],
       pendiente_erogar: ['', [Validators.required, Validators.min(0)]]
     });
+
+    // Suscripción al año
+    this.anioService.anio$.subscribe(anio => {
+      this.anioSeleccionado = anio;
+      this.cargarTodo();
+    });
   }
 
   ngOnInit(): void {
     this.inactivosPorTipo = [];
-    this.cargarTodo();
+    // No llamar cargarTodo aquí porque ya se llama en la suscripción
   }
 
   // ============== CARGA DE DATOS ==============
@@ -155,6 +165,7 @@ export class BecadosComponent implements OnInit {
   }
 
   loadBecados(): void {
+    // TEMPORAL: llamar sin año hasta que el backend esté listo
     this.becadoService.getAll().subscribe({
       next: (response) => {
         this.becados = response.data || [];
@@ -174,6 +185,7 @@ export class BecadosComponent implements OnInit {
   }
 
   loadUniversidades(): void {
+    // TEMPORAL: llamar sin año hasta que el backend esté listo
     this.universidadService.getAll().subscribe({
       next: (response) => {
         this.universidades = response.data || [];
@@ -185,6 +197,7 @@ export class BecadosComponent implements OnInit {
   }
 
   loadModalidades(): void {
+    // TEMPORAL: llamar sin año hasta que el backend esté listo
     this.modalidadService.getAll().subscribe({
       next: (response) => {
         this.modalidades = response.data || [];
@@ -471,34 +484,33 @@ export class BecadosComponent implements OnInit {
   }
 
   // ============== MÉTODOS PARA EL HTML ==============
-
-calcularBolsaTotal(): number {
-  return this.becados.reduce((sum, b) => sum + (b.monto_autorizado || 0), 0);
-}
-
-calcularErogadoTotal(): number {
-  return this.becados.reduce((sum, b) => sum + (b.erogado || 0), 0);
-}
-
-calcularPendienteTotal(): number {
-  return this.becados.reduce((sum, b) => {
-    return sum + ((b.monto_autorizado || 0) - (b.erogado || 0));
-  }, 0);
-}
-
-calcularPerdidoInactivos(): number {
-  const inactivos = this.becados.filter(b => b.estatus === false);
-  return inactivos.reduce((sum, b) => {
-    return sum + ((b.monto_autorizado || 0) - (b.erogado || 0));
-  }, 0);
-}
-
-getTotalInactivos(): number {
-  if (!this.inactivosPorTipo || this.inactivosPorTipo.length === 0) {
-    return 0;
+  calcularBolsaTotal(): number {
+    return this.becados.reduce((sum, b) => sum + (b.monto_autorizado || 0), 0);
   }
-  return this.inactivosPorTipo.reduce((sum, g) => sum + g.cantidad, 0);
-}
+
+  calcularErogadoTotal(): number {
+    return this.becados.reduce((sum, b) => sum + (b.erogado || 0), 0);
+  }
+
+  calcularPendienteTotal(): number {
+    return this.becados.reduce((sum, b) => {
+      return sum + ((b.monto_autorizado || 0) - (b.erogado || 0));
+    }, 0);
+  }
+
+  calcularPerdidoInactivos(): number {
+    const inactivos = this.becados.filter(b => b.estatus === false);
+    return inactivos.reduce((sum, b) => {
+      return sum + ((b.monto_autorizado || 0) - (b.erogado || 0));
+    }, 0);
+  }
+
+  getTotalInactivos(): number {
+    if (!this.inactivosPorTipo || this.inactivosPorTipo.length === 0) {
+      return 0;
+    }
+    return this.inactivosPorTipo.reduce((sum, g) => sum + g.cantidad, 0);
+  }
 
   // ============== UTILIDADES ==============
   getEstatusSeverity(estatus: boolean): 'success' | 'danger' {

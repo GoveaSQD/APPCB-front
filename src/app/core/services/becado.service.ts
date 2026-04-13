@@ -18,9 +18,13 @@ export class BecadoService {
 
   constructor(private http: HttpClient) {}
 
-  // GET /api/becados - Listar todos
-  getAll(): Observable<ApiResponse<Becado[]>> {
-    return this.http.get<ApiResponse<Becado[]>>(this.apiUrl)
+  // GET /api/becados - Listar todos (CON soporte para año)
+  getAll(anio?: number): Observable<ApiResponse<Becado[]>> {
+    let url = this.apiUrl;
+    if (anio) {
+      url += `?anio=${anio}`;
+    }
+    return this.http.get<ApiResponse<Becado[]>>(url)
       .pipe(
         map(response => {
           if (response.data) {
@@ -67,9 +71,9 @@ export class BecadoService {
       .pipe(catchError(this.handleError));
   }
 
-  // Obtener resumen financiero
-  getResumenFinanciero(): Observable<ResumenFinanciero> {
-    return this.getAll().pipe(
+  // Obtener resumen financiero (CON soporte para año)
+  getResumenFinanciero(anio?: number): Observable<ResumenFinanciero> {
+    return this.getAll(anio).pipe(
       map(response => {
         const becados = response.data || [];
         
@@ -95,14 +99,13 @@ export class BecadoService {
     );
   }
 
-  // Obtener tabla de inactivos agrupados por tipo
-  getInactivosPorTipo(): Observable<TablaInactivos[]> {
-    return this.getAll().pipe(
+  // Obtener tabla de inactivos agrupados por tipo (CON soporte para año)
+  getInactivosPorTipo(anio?: number): Observable<TablaInactivos[]> {
+    return this.getAll(anio).pipe(
       map(response => {
         const becados = response.data || [];
         const inactivos = becados.filter((b: Becado) => b.estatus === false);
         
-        // Tipos de inactivos
         const tipos = [
           'Renuncia parcial',
           'Renuncia tácita', 

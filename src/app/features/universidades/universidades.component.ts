@@ -4,7 +4,7 @@ import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angula
 import { RouterModule } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 
-// PrimeNG Modules (agrega AutoCompleteModule)
+// PrimeNG Modules
 import { TableModule } from 'primeng/table';
 import { ButtonModule } from 'primeng/button';
 import { DialogModule } from 'primeng/dialog';
@@ -15,7 +15,6 @@ import { ToolbarModule } from 'primeng/toolbar';
 import { TagModule } from 'primeng/tag';
 import { DropdownModule } from 'primeng/dropdown';
 import { CheckboxModule } from 'primeng/checkbox';
-import { AutoCompleteModule } from 'primeng/autocomplete'; // ← AGREGAR
 import { IconFieldModule } from 'primeng/iconfield';
 import { InputIconModule } from 'primeng/inputicon';
 import { MessageService } from 'primeng/api';
@@ -23,6 +22,7 @@ import { ConfirmationService } from 'primeng/api';
 
 // Services
 import { UniversidadService } from '../../core/services/universidad.service';
+import { AnioService } from '../../core/services/anio.service';
 import { Universidad } from '../../core/models/universidad.model';
 
 @Component({
@@ -43,7 +43,6 @@ import { Universidad } from '../../core/models/universidad.model';
     TagModule,
     DropdownModule,
     CheckboxModule,
-    AutoCompleteModule,
     IconFieldModule,
     InputIconModule
   ],
@@ -60,9 +59,7 @@ export class UniversidadesComponent implements OnInit {
   editingUniversidad: Universidad | null = null;
   searchText: string = '';
 
-  // Para autocompletado
-  sugerenciasUniversidades: string[] = [];
-  universidadesMorelia: string[] = [];
+  anioSeleccionado: number = new Date().getFullYear();
 
   // Lista de países comunes
   paises: string[] = [
@@ -80,7 +77,8 @@ export class UniversidadesComponent implements OnInit {
     private universidadService: UniversidadService,
     private fb: FormBuilder,
     private messageService: MessageService,
-    private confirmationService: ConfirmationService
+    private confirmationService: ConfirmationService,
+    private anioService: AnioService
   ) {
     this.universidadForm = this.fb.group({
       nombre: ['', [Validators.required, Validators.minLength(3)]],
@@ -90,16 +88,20 @@ export class UniversidadesComponent implements OnInit {
       estatus: [1]
     });
 
-    // Cargar universidades de Morelia
-    this.universidadesMorelia = this.universidadService.getUniversidadesMorelia();
+    // Suscripción al año
+    this.anioService.anio$.subscribe(anio => {
+      this.anioSeleccionado = anio;
+      this.loadUniversidades();
+    });
   }
 
   ngOnInit(): void {
-    this.loadUniversidades();
+    // No llamar aquí porque ya se llama en la suscripción
   }
 
   loadUniversidades(): void {
     this.loading = true;
+    // Temporal: llamar sin año hasta que backend esté listo
     this.universidadService.getAll().subscribe({
       next: (response) => {
         this.universidades = response.data || [];
@@ -119,7 +121,13 @@ export class UniversidadesComponent implements OnInit {
 
   openNew(): void {
     this.editingUniversidad = null;
-    this.universidadForm.reset({ estatus: true });
+    this.universidadForm.reset({ 
+      nombre: '',
+      ciudad: '',
+      pais: '',
+      estado: '',
+      estatus: 1
+    });
     this.submitted = false;
     this.universidadDialog = true;
   }
@@ -130,7 +138,7 @@ export class UniversidadesComponent implements OnInit {
       nombre: universidad.nombre,
       ciudad: universidad.ciudad,
       pais: universidad.pais,
-      estado: universidad.estado,
+      estado: universidad.estado || '',
       estatus: universidad.estatus
     });
     this.universidadDialog = true;
@@ -182,13 +190,9 @@ export class UniversidadesComponent implements OnInit {
       return;
     }
 
-    const universidadData = {
-      ...this.universidadForm.value,
-      estatus: this.universidadForm.value.estatus ? 1 : 2
-    };
-    
+    const universidadData = this.universidadForm.value;
+
     if (this.editingUniversidad) {
-      // Actualizar
       this.universidadService.update(this.editingUniversidad.id_universidad!, universidadData).subscribe({
         next: (response) => {
           if (response.success) {
@@ -212,7 +216,6 @@ export class UniversidadesComponent implements OnInit {
         }
       });
     } else {
-      // Crear nueva
       this.universidadService.create(universidadData).subscribe({
         next: (response) => {
           if (response.success) {
@@ -238,22 +241,6 @@ export class UniversidadesComponent implements OnInit {
     }
   }
 
-    // NUEVO: Método para buscar universidades (autocompletado)
-buscarUniversidades(event: any): void {
-  console.log('Evento recibido:', event);
-  const query = event.query;
-  console.log('Query:', query);
-  this.sugerenciasUniversidades = this.universidadService.buscarUniversidades(query);
-  console.log('Sugerencias:', this.sugerenciasUniversidades);
-}
-
-  // NUEVO: Al seleccionar una sugerencia, también sugerir ciudad y país si es posible
-  onSelectUniversidad(event: any): void {
-    const nombreSeleccionado = event;
-    // Aquí podrías agregar lógica para autocompletar ciudad y país según la universidad
-    // Por ejemplo, si es UNAM, sugerir "Morelia" y "México"
-  }
-
   getSeverity(estatus: number): 'success' | 'danger' {
     return estatus === 1 ? 'success' : 'danger';
   }
@@ -262,11 +249,6 @@ buscarUniversidades(event: any): void {
     return estatus === 1 ? 'Activo' : 'Inactivo';
   }
 
-  getEstatusSeverity(estatus: number): 'success' | 'danger' {
-    return estatus === 1 ? 'success' : 'danger';
-  }
-
-  // Filtro para búsqueda
   get filteredUniversidades(): Universidad[] {
     if (!this.searchText) return this.universidades;
     
@@ -277,5 +259,15 @@ buscarUniversidades(event: any): void {
       u.pais.toLowerCase().includes(searchLower) ||
       u.estado?.toLowerCase().includes(searchLower)
     );
+  }
+
+  refrescar(): void {
+    this.loadUniversidades();
+    this.messageService.add({
+      severity: 'success',
+      summary: 'Actualizado',
+      detail: 'Datos actualizados correctamente',
+      life: 2000
+    });
   }
 }

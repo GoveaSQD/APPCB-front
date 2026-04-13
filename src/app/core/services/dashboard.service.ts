@@ -27,6 +27,7 @@ export class DashboardService {
     private modalidadService: ModalidadService
   ) {}
 
+  
   getDashboardStats(): Observable<DashboardStats> {
     return forkJoin({
       becados: this.becadoService.getAll().pipe(catchError(() => of({ data: [] }))),
