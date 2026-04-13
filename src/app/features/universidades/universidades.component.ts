@@ -4,7 +4,7 @@ import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angula
 import { RouterModule } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 
-// PrimeNG Modules
+// PrimeNG Modules (agrega AutoCompleteModule)
 import { TableModule } from 'primeng/table';
 import { ButtonModule } from 'primeng/button';
 import { DialogModule } from 'primeng/dialog';
@@ -15,6 +15,7 @@ import { ToolbarModule } from 'primeng/toolbar';
 import { TagModule } from 'primeng/tag';
 import { DropdownModule } from 'primeng/dropdown';
 import { CheckboxModule } from 'primeng/checkbox';
+import { AutoCompleteModule } from 'primeng/autocomplete'; // ← AGREGAR
 import { IconFieldModule } from 'primeng/iconfield';
 import { InputIconModule } from 'primeng/inputicon';
 import { MessageService } from 'primeng/api';
@@ -42,6 +43,7 @@ import { Universidad } from '../../core/models/universidad.model';
     TagModule,
     DropdownModule,
     CheckboxModule,
+    AutoCompleteModule,
     IconFieldModule,
     InputIconModule
   ],
@@ -57,6 +59,10 @@ export class UniversidadesComponent implements OnInit {
   loading: boolean = false;
   editingUniversidad: Universidad | null = null;
   searchText: string = '';
+
+  // Para autocompletado
+  sugerenciasUniversidades: string[] = [];
+  universidadesMorelia: string[] = [];
 
   // Lista de países comunes
   paises: string[] = [
@@ -81,8 +87,11 @@ export class UniversidadesComponent implements OnInit {
       ciudad: ['', Validators.required],
       pais: ['', Validators.required],
       estado: [''],
-      estatus: [true]  // Ahora es booleano para el checkbox
+      estatus: [1]
     });
+
+    // Cargar universidades de Morelia
+    this.universidadesMorelia = this.universidadService.getUniversidadesMorelia();
   }
 
   ngOnInit(): void {
@@ -227,6 +236,22 @@ export class UniversidadesComponent implements OnInit {
         }
       });
     }
+  }
+
+    // NUEVO: Método para buscar universidades (autocompletado)
+buscarUniversidades(event: any): void {
+  console.log('Evento recibido:', event);
+  const query = event.query;
+  console.log('Query:', query);
+  this.sugerenciasUniversidades = this.universidadService.buscarUniversidades(query);
+  console.log('Sugerencias:', this.sugerenciasUniversidades);
+}
+
+  // NUEVO: Al seleccionar una sugerencia, también sugerir ciudad y país si es posible
+  onSelectUniversidad(event: any): void {
+    const nombreSeleccionado = event;
+    // Aquí podrías agregar lógica para autocompletar ciudad y país según la universidad
+    // Por ejemplo, si es UNAM, sugerir "Morelia" y "México"
   }
 
   getSeverity(estatus: number): 'success' | 'danger' {

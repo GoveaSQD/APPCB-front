@@ -122,29 +122,33 @@
     
     <form [formGroup]="universidadForm">
       <div class="flex flex-column gap-4">
-        <!-- Nombre -->
-        <div class="field">
-          <label for="nombre" class="block font-medium mb-2">
-            Nombre <span class="text-red-500">*</span>
-          </label>
-          <input 
-            pInputText 
-            id="nombre" 
-            formControlName="nombre" 
-            class="w-full"
-            placeholder="Ej: Universidad Nacional Autónoma de México"
-            [class.ng-invalid]="submitted && universidadForm.get('nombre')?.invalid">
-          @if (submitted && universidadForm.get('nombre')?.invalid) {
-            <small class="p-error block mt-1">
-              @if (universidadForm.get('nombre')?.errors?.['required']) {
-                El nombre es requerido
-              }
-              @if (universidadForm.get('nombre')?.errors?.['minlength']) {
-                Mínimo 3 caracteres
-              }
-            </small>
+        <!-- Nombre con autocompletado -->
+    <div class="field">
+      <label for="nombre" class="block font-medium mb-2">
+        Nombre <span class="text-red-500">*</span>
+      </label>
+      <p-autoComplete 
+        id="nombre"
+        formControlName="nombre"
+        [suggestions]="sugerenciasUniversidades"
+        (completeMethod)="buscarUniversidades($event)"
+        [dropdown]="true"
+        placeholder="Escribe el nombre de la universidad"
+        [forceSelection]="false"
+        class="w-full"
+        [class.ng-invalid]="submitted && universidadForm.get('nombre')?.invalid">
+      </p-autoComplete>
+      @if (submitted && universidadForm.get('nombre')?.invalid) {
+        <small class="p-error block mt-1">
+          @if (universidadForm.get('nombre')?.errors?.['required']) {
+            El nombre es requerido
           }
-        </div>
+          @if (universidadForm.get('nombre')?.errors?.['minlength']) {
+            Mínimo 3 caracteres
+          }
+        </small>
+      }
+    </div>
 
         <!-- Ciudad y País -->
         <div class="grid">

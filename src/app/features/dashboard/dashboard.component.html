@@ -1,6 +1,6 @@
 <div class="dashboard-container">
   <!-- Header con bienvenida y acciones -->
-  <div class="flex justify-content-between align-items-center mb-4 fade-in">
+  <div class="flex justify-content-between align-items-center mb-4">
     <div>
       <h1 class="text-3xl font-bold text-900 mb-1">
         ¡Bienvenido, {{ usuario?.nombre || 'Usuario' }}!
@@ -10,30 +10,12 @@
         {{ fechaActual | date:'EEEE, d \'de\' MMMM \'de\' yyyy' }}
       </p>
     </div>
-    
-    <div class="action-buttons">
-      <p-button 
-        label="Exportar Reporte" 
-        icon="pi pi-file-pdf" 
-        styleClass="p-button-outlined p-button-secondary"
-        (onClick)="exportarReporteGeneral()">
-      </p-button>
-      <p-button 
-        label="Universidades Morelia" 
-        icon="pi pi-download" 
-        styleClass="p-button-outlined p-button-info"
-        (onClick)="exportarUniversidadesMorelia()">
-      </p-button>
-      <p-button 
-        label="Reporte PDF" 
-        icon="pi pi-file-pdf" 
-        styleClass="p-button-danger p-button-outlined"
-        (onClick)="exportarReportePDF()">
-      </p-button>
+    <div>
       <p-button 
         label="Refrescar" 
         icon="pi pi-refresh" 
-        (onClick)="refrescarDashboard()"
+        styleClass="p-button-outlined"
+        (onClick)="refrescar()"
         [loading]="stats.loading">
       </p-button>
     </div>
@@ -41,68 +23,22 @@
 
   <p-toast position="top-right"></p-toast>
 
-  <!-- KPI Cards - Resumen Rápido -->
-  <div class="kpi-grid" *ngIf="!stats.loading">
-    <div class="kpi-card">
-      <div class="kpi-title">Total Becados</div>
-      <div class="kpi-value">{{ stats.totalBecados }}</div>
-      <div class="kpi-trend">
-        <i class="pi pi-arrow-up"></i>
-        {{ calcularPorcentajeActivos() | number:'1.0-0' }}% activos
-      </div>
-    </div>
-    
-    <div class="kpi-card">
-      <div class="kpi-title">Universidades</div>
-      <div class="kpi-value">{{ stats.totalUniversidades }}</div>
-      <div class="kpi-trend">
-        <i class="pi pi-building"></i>
-        {{ stats.universidadesMorelia.length }} en Morelia
-      </div>
-    </div>
-    
-    <div class="kpi-card">
-      <div class="kpi-title">Modalidades</div>
-      <div class="kpi-value">{{ stats.totalModalidades }}</div>
-      <div class="kpi-trend">
-        <i class="pi pi-tags"></i>
-        Tipos de beca
-      </div>
-    </div>
-    
-    <div class="kpi-card">
-      <div class="kpi-title">Usuarios</div>
-      <div class="kpi-value">{{ stats.totalUsuarios }}</div>
-      <div class="kpi-trend">
-        <i class="pi pi-users"></i>
-        Registrados
-      </div>
-    </div>
-  </div>
-
-  <!-- Skeleton mientras carga -->
-  <div class="kpi-grid" *ngIf="stats.loading">
-    <div *ngFor="let i of [1,2,3,4]" class="kpi-card">
-      <p-skeleton width="80px" height="20px" styleClass="mb-2"></p-skeleton>
-      <p-skeleton width="60px" height="32px"></p-skeleton>
-    </div>
-  </div>
-
-  <!-- Cards Financieras -->
-  <div class="grid mt-4">
+  <!-- Cards de resumen financiero -->
+  <div class="grid">
     <!-- Bolsa Total -->
     <div class="col-12 md:col-6 lg:col-3">
-      <div class="finance-card blue fade-in">
+      <div class="finance-card total">
         <div class="flex align-items-center">
-          <div class="stats-icon bg-white-alpha-20 mr-3">
-            <i class="pi pi-dollar text-2xl text-white"></i>
+          <div class="finance-icon">
+            <i class="pi pi-dollar"></i>
           </div>
-          <div>
-            <span class="stats-label text-white-alpha-70">Bolsa Total</span>
-            <div class="stats-value text-white" *ngIf="!stats.loading">
-              {{ formatCurrency(stats.bolsaTotal) }}
-            </div>
-            <p-skeleton *ngIf="stats.loading" width="120px" height="32px" styleClass="bg-white-alpha-30"></p-skeleton>
+          <div class="ml-3">
+            <span class="finance-label">Bolsa Total</span>
+            @if (stats.loading) {
+              <p-skeleton width="120px" height="32px"></p-skeleton>
+            } @else {
+              <div class="finance-value">{{ formatCurrency(stats.bolsaTotal) }}</div>
+            }
           </div>
         </div>
       </div>
@@ -110,434 +46,100 @@
 
     <!-- Dinero Erogado -->
     <div class="col-12 md:col-6 lg:col-3">
-      <div class="finance-card green fade-in">
+      <div class="finance-card erogado">
         <div class="flex align-items-center">
-          <div class="stats-icon bg-white-alpha-20 mr-3">
-            <i class="pi pi-check-circle text-2xl text-white"></i>
+          <div class="finance-icon">
+            <i class="pi pi-check-circle"></i>
           </div>
-          <div>
-            <span class="stats-label text-white-alpha-70">Erogado</span>
-            <div class="stats-value text-white" *ngIf="!stats.loading">
-              {{ formatCurrency(stats.dineroErogado) }}
-            </div>
-            <p-skeleton *ngIf="stats.loading" width="120px" height="32px" styleClass="bg-white-alpha-30"></p-skeleton>
+          <div class="ml-3">
+            <span class="finance-label">Dinero Erogado</span>
+            @if (stats.loading) {
+              <p-skeleton width="120px" height="32px"></p-skeleton>
+            } @else {
+              <div class="finance-value">{{ formatCurrency(stats.erogadoTotal) }}</div>
+            }
           </div>
         </div>
-        <div class="mt-2">
-          <p-progressBar 
-            [value]="calcularPorcentajeErogado()" 
-            [showValue]="false"
-            styleClass="finance-progress h-1">
-          </p-progressBar>
-          <div class="flex justify-content-between mt-1">
-            <span class="text-white-alpha-70 text-sm">Progreso</span>
-            <span class="text-white font-bold text-sm">{{ calcularPorcentajeErogado() | number:'1.0-0' }}%</span>
+        <div class="progress-section mt-2">
+          <div class="flex justify-content-between mb-1">
+            <span class="text-sm">Progreso</span>
+            <span class="text-sm font-bold">{{ getPorcentajeErogado() | number:'1.0-0' }}%</span>
           </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Dinero Faltante -->
-    <div class="col-12 md:col-6 lg:col-3">
-      <div class="finance-card orange fade-in">
-        <div class="flex align-items-center">
-          <div class="stats-icon bg-white-alpha-20 mr-3">
-            <i class="pi pi-clock text-2xl text-white"></i>
-          </div>
-          <div>
-            <span class="stats-label text-white-alpha-70">Faltante Total</span>
-            <div class="stats-value text-white" *ngIf="!stats.loading">
-              {{ formatCurrency(stats.dineroFaltante) }}
-            </div>
-            <p-skeleton *ngIf="stats.loading" width="120px" height="32px" styleClass="bg-white-alpha-30"></p-skeleton>
+          <div class="progress-bar">
+            <div class="progress-fill" [style.width.%]="getPorcentajeErogado()"></div>
           </div>
         </div>
       </div>
     </div>
 
-    <!-- Faltante de Inactivos -->
+    <!-- Pendiente por Erogar -->
     <div class="col-12 md:col-6 lg:col-3">
-      <div class="finance-card red fade-in">
+      <div class="finance-card pendiente">
         <div class="flex align-items-center">
-          <div class="stats-icon bg-white-alpha-20 mr-3">
-            <i class="pi pi-exclamation-triangle text-2xl text-white"></i>
+          <div class="finance-icon">
+            <i class="pi pi-clock"></i>
           </div>
-          <div>
-            <span class="stats-label text-white-alpha-70">Perdido (Inactivos)</span>
-            <div class="stats-value text-white" *ngIf="!stats.loading">
-              {{ formatCurrency(stats.dineroFaltanteInactivos) }}
-            </div>
-            <p-skeleton *ngIf="stats.loading" width="120px" height="32px" styleClass="bg-white-alpha-30"></p-skeleton>
+          <div class="ml-3">
+            <span class="finance-label">Faltante Total</span>
+            @if (stats.loading) {
+              <p-skeleton width="120px" height="32px"></p-skeleton>
+            } @else {
+              <div class="finance-value">{{ formatCurrency(stats.pendienteTotal) }}</div>
+            }
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Perdido en Inactivos -->
+    <div class="col-12 md:col-6 lg:col-3">
+      <div class="finance-card perdido">
+        <div class="flex align-items-center">
+          <div class="finance-icon">
+            <i class="pi pi-exclamation-triangle"></i>
+          </div>
+          <div class="ml-3">
+            <span class="finance-label">Perdido (Inactivos)</span>
+            @if (stats.loading) {
+              <p-skeleton width="120px" height="32px"></p-skeleton>
+            } @else {
+              <div class="finance-value">{{ formatCurrency(stats.perdidoInactivos) }}</div>
+            }
           </div>
         </div>
       </div>
     </div>
   </div>
 
-  <!-- Gráficas -->
+  <!-- Tarjeta de resumen de becados -->
   <div class="grid mt-4">
-    <!-- Gráfica de Distribución -->
-    <div class="col-12 lg:col-4">
-      <div class="chart-container fade-in">
-        <h3 class="text-lg font-bold text-900 mb-3">Distribución de Becados</h3>
-        <div style="height: 250px;">
-          <p-chart 
-            *ngIf="!stats.loading"
-            type="doughnut" 
-            [data]="chartDistribucion" 
-            [options]="chartOptions">
-          </p-chart>
-          <div *ngIf="stats.loading" class="flex justify-content-center align-items-center h-full">
-            <i class="pi pi-spin pi-spinner text-4xl text-primary"></i>
+    <div class="col-12">
+      <div class="resumen-card">
+        <div class="flex justify-content-between align-items-center">
+          <div>
+            <span class="resumen-label">Total Becados</span>
+            <div class="resumen-value">{{ stats.totalBecados }}</div>
           </div>
-        </div>
-        <div class="flex justify-content-around mt-3">
-          <div class="text-center">
-            <span class="text-green-600 font-bold text-xl">{{ stats.becadosActivos }}</span>
-            <p class="text-600 text-sm">Activos</p>
-          </div>
-          <div class="text-center">
-            <span class="text-red-600 font-bold text-xl">{{ stats.becadosInactivos }}</span>
-            <p class="text-600 text-sm">Inactivos</p>
+          <div class="flex gap-4">
+            <div class="text-center">
+              <span class="badge bg-green-100 text-green-700">{{ stats.becadosActivos }}</span>
+              <p class="text-sm text-600 mt-1">Activos</p>
+            </div>
+            <div class="text-center">
+              <span class="badge bg-red-100 text-red-700">{{ stats.becadosInactivos }}</span>
+              <p class="text-sm text-600 mt-1">Inactivos</p>
+            </div>
+            <div class="text-center">
+              <span class="badge bg-blue-100 text-blue-700">{{ stats.totalUniversidades }}</span>
+              <p class="text-sm text-600 mt-1">Universidades</p>
+            </div>
+            <div class="text-center">
+              <span class="badge bg-purple-100 text-purple-700">{{ stats.totalModalidades }}</span>
+              <p class="text-sm text-600 mt-1">Modalidades</p>
+            </div>
           </div>
         </div>
       </div>
     </div>
-
-    <!-- Gráfica de Montos por Mes -->
-    <div class="col-12 lg:col-8">
-      <div class="chart-container fade-in">
-        <h3 class="text-lg font-bold text-900 mb-3">Montos Autorizados por Mes</h3>
-        <div style="height: 250px;">
-          <p-chart 
-            *ngIf="!stats.loading"
-            type="line" 
-            [data]="chartMontos" 
-            [options]="chartOptions">
-          </p-chart>
-          <div *ngIf="stats.loading" class="flex justify-content-center align-items-center h-full">
-            <i class="pi pi-spin pi-spinner text-4xl text-primary"></i>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- Tabs para Activos e Inactivos -->
-  <div class="mt-4 custom-tabs fade-in">
-    <p-tabView>
-      <!-- Tab de Activos -->
-      <p-tabPanel>
-        <ng-template pTemplate="header">
-          <span class="flex align-items-center gap-2">
-            <i class="pi pi-check-circle text-green-600"></i>
-            <span>Becados Activos</span>
-            <span class="bg-green-100 text-green-800 px-2 py-1 border-round text-sm ml-2">
-              {{ tablaActivos.total }}
-            </span>
-          </span>
-        </ng-template>
-        
-        <!-- Filtros para activos -->
-        <div class="filtros-section">
-          <span class="p-input-icon-left filtro-busqueda">
-            <i class="pi pi-search"></i>
-            <input 
-              pInputText 
-              type="text" 
-              [(ngModel)]="filtroBusqueda" 
-              placeholder="Buscar en activos..."
-              class="w-full">
-          </span>
-          
-          <div class="flex align-items-center gap-3">
-            <span class="text-600">
-              <i class="pi pi-dollar mr-1"></i>
-              Por erogarse: {{ formatCurrency(tablaActivos.montoPorErogarse) }}
-            </span>
-          </div>
-        </div>
-        
-        <!-- Tabla de Activos -->
-        <p-table 
-          [value]="becadosActivosFiltrados" 
-          [paginator]="true" 
-          [rows]="5"
-          [globalFilterFields]="['nombre_completo','universidad','carrera']"
-          styleClass="p-datatable-sm"
-          responsiveLayout="stack">
-          
-          <ng-template pTemplate="header">
-            <tr>
-              <th>Nombre</th>
-              <th>Carrera</th>
-              <th>Universidad</th>
-              <th>Monto Autorizado</th>
-              <th>Erogado</th>
-              <th>Pendiente</th>
-              <th>Acciones</th>
-            </tr>
-          </ng-template>
-          
-          <ng-template pTemplate="body" let-becado>
-            <tr>
-              <td class="font-medium">{{ becado.nombre_completo }}</td>
-              <td>{{ becado.carrera }}</td>
-              <td>{{ becado.universidad }}</td>
-              <td class="text-primary font-bold">{{ formatCurrency(becado.monto_autorizado) }}</td>
-              <td class="text-green-600">{{ formatCurrency(becado.erogado) }}</td>
-              <td class="text-orange-600">{{ formatCurrency(becado.pendiente) }}</td>
-              <td>
-                <p-button 
-                  icon="pi pi-search" 
-                  styleClass="p-button-rounded p-button-text p-button-sm"
-                  (onClick)="verDetalle(becado)">
-                </p-button>
-              </td>
-            </tr>
-          </ng-template>
-          
-          <ng-template pTemplate="emptymessage">
-            <tr>
-              <td colspan="7" class="text-center p-4">
-                <i class="pi pi-users text-4xl text-gray-400 block mb-3"></i>
-                <p class="text-gray-500">No hay becados activos que coincidan con la búsqueda</p>
-              </td>
-            </tr>
-          </ng-template>
-        </p-table>
-        
-        <!-- Resumen de Activos -->
-        <div class="grid mt-3">
-          <div class="col-12 md:col-4">
-            <div class="bg-green-50 p-3 border-round">
-              <span class="text-600 block text-sm">Total Activos</span>
-              <span class="text-2xl font-bold text-green-700">{{ tablaActivos.total }}</span>
-            </div>
-          </div>
-          <div class="col-12 md:col-4">
-            <div class="bg-blue-50 p-3 border-round">
-              <span class="text-600 block text-sm">Monto por Erogarse</span>
-              <span class="text-2xl font-bold text-blue-700">{{ formatCurrency(tablaActivos.montoPorErogarse) }}</span>
-            </div>
-          </div>
-          <div class="col-12 md:col-4">
-            <div class="bg-purple-50 p-3 border-round">
-              <span class="text-600 block text-sm">Promedio por Becado</span>
-              <span class="text-2xl font-bold text-purple-700">
-                {{ formatCurrency(tablaActivos.total ? (tablaActivos.montoPorErogarse / tablaActivos.total) : 0) }}
-              </span>
-            </div>
-          </div>
-        </div>
-      </p-tabPanel>
-
-      <!-- Tab de Inactivos -->
-      <p-tabPanel>
-        <ng-template pTemplate="header">
-          <span class="flex align-items-center gap-2">
-            <i class="pi pi-exclamation-triangle text-red-600"></i>
-            <span>Becados Inactivos</span>
-            <span class="bg-red-100 text-red-800 px-2 py-1 border-round text-sm ml-2">
-              {{ stats.becadosInactivos }}
-            </span>
-          </span>
-        </ng-template>
-        
-        <!-- Filtros para inactivos -->
-        <div class="filtros-section">
-          <span class="p-input-icon-left filtro-busqueda">
-            <i class="pi pi-search"></i>
-            <input 
-              pInputText 
-              type="text" 
-              [(ngModel)]="filtroBusqueda" 
-              placeholder="Buscar en inactivos..."
-              class="w-full">
-          </span>
-          
-          <p-dropdown 
-            [(ngModel)]="filtroTipoInactivo"
-            [options]="tiposInactivo"
-            placeholder="Filtrar por tipo"
-            styleClass="filtro-dropdown">
-          </p-dropdown>
-        </div>
-        
-        <!-- Acordeón por tipo de inactivo -->
-        <p-accordion [multiple]="true">
-          <p-accordionTab *ngFor="let grupo of inactivosFiltrados">
-            <ng-template pTemplate="header">
-              <div class="flex align-items-center justify-content-between w-full">
-                <div class="flex align-items-center gap-2">
-                  <p-tag 
-                    [severity]="getSeveridadPorTipo(grupo.tipo)"
-                    [value]="grupo.tipo">
-                  </p-tag>
-                  <span class="font-bold ml-2">{{ grupo.cantidad }} becados</span>
-                </div>
-                <span class="text-red-600 font-bold">
-                  {{ formatCurrency(grupo.montoPerdido) }}
-                </span>
-              </div>
-            </ng-template>
-            
-            <!-- Tabla de becados por tipo -->
-            <p-table 
-              [value]="grupo.becados" 
-              [paginator]="true" 
-              [rows]="5"
-              styleClass="p-datatable-sm">
-              
-              <ng-template pTemplate="header">
-                <tr>
-                  <th>Nombre</th>
-                  <th>Carrera</th>
-                  <th>Universidad</th>
-                  <th>Monto Autorizado</th>
-                  <th>Erogado</th>
-                  <th>Perdido</th>
-                </tr>
-              </ng-template>
-              
-              <ng-template pTemplate="body" let-becado>
-                <tr>
-                  <td class="font-medium">{{ becado.nombre_completo }}</td>
-                  <td>{{ becado.carrera }}</td>
-                  <td>{{ becado.universidad }}</td>
-                  <td>{{ formatCurrency(becado.monto_autorizado) }}</td>
-                  <td>{{ formatCurrency(becado.erogado) }}</td>
-                  <td class="text-red-600 font-bold">{{ formatCurrency(becado.pendiente) }}</td>
-                </tr>
-              </ng-template>
-            </p-table>
-          </p-accordionTab>
-        </p-accordion>
-        
-        <!-- Resumen de Inactivos -->
-        <div class="grid mt-3">
-          <div class="col-12 md:col-4">
-            <div class="bg-red-50 p-3 border-round">
-              <span class="text-600 block text-sm">Total Inactivos</span>
-              <span class="text-2xl font-bold text-red-700">{{ stats.becadosInactivos }}</span>
-            </div>
-          </div>
-          <div class="col-12 md:col-4">
-            <div class="bg-orange-50 p-3 border-round">
-              <span class="text-600 block text-sm">Monto Perdido</span>
-              <span class="text-2xl font-bold text-orange-700">{{ formatCurrency(stats.dineroFaltanteInactivos) }}</span>
-            </div>
-          </div>
-          <div class="col-12 md:col-4">
-            <div class="bg-gray-50 p-3 border-round">
-              <span class="text-600 block text-sm">Promedio por Inactivo</span>
-              <span class="text-2xl font-bold text-gray-700">
-                {{ formatCurrency(stats.becadosInactivos ? (stats.dineroFaltanteInactivos / stats.becadosInactivos) : 0) }}
-              </span>
-            </div>
-          </div>
-        </div>
-      </p-tabPanel>
-    </p-tabView>
-  </div>
-
-  <!-- Universidades de Morelia -->
-  <div class="mt-4 fade-in">
-    <p-panel header="Universidades en Morelia" [toggleable]="true">
-      <div class="flex justify-content-between align-items-center mb-3">
-        <p class="text-600 m-0">
-          <i class="pi pi-map-marker mr-2 text-primary"></i>
-          {{ stats.universidadesMorelia.length }} universidades encontradas
-        </p>
-        <p-button 
-          label="Exportar CSV" 
-          icon="pi pi-download" 
-          styleClass="p-button-sm p-button-outlined"
-          (onClick)="exportarUniversidadesMorelia()">
-        </p-button>
-      </div>
-      
-      <p-table 
-        [value]="stats.universidadesMorelia" 
-        styleClass="p-datatable-sm">
-        
-        <ng-template pTemplate="header">
-          <tr>
-            <th>Universidad</th>
-            <th>Dirección</th>
-            <th>Total Becados</th>
-            <th>Monto Total</th>
-            <th>Erogado Total</th>
-          </tr>
-        </ng-template>
-        
-        <ng-template pTemplate="body" let-uni>
-          <tr>
-            <td class="font-bold">{{ uni.nombre }}</td>
-            <td>{{ uni.ciudad }}, {{ uni.pais }}</td>
-            <td class="text-center">{{ uni.totalBecados }}</td>
-            <td class="text-primary font-bold">{{ formatCurrency(uni.montoTotal) }}</td>
-            <td class="text-green-600">{{ formatCurrency(uni.erogadoTotal) }}</td>
-          </tr>
-        </ng-template>
-        
-        <ng-template pTemplate="emptymessage">
-          <tr>
-            <td colspan="5" class="text-center p-4">
-              <i class="pi pi-building text-4xl text-gray-400 block mb-3"></i>
-              <p class="text-gray-500">No hay universidades registradas en Morelia</p>
-            </td>
-          </tr>
-        </ng-template>
-      </p-table>
-    </p-panel>
-  </div>
-
-  <!-- Últimos Becados -->
-  <div class="mt-4 fade-in">
-    <p-panel header="Últimos Becados Registrados" [toggleable]="true">
-      <p-table 
-        [value]="stats.ultimosBecados.slice(0, 5)" 
-        styleClass="p-datatable-sm">
-        
-        <ng-template pTemplate="header">
-          <tr>
-            <th>Nombre</th>
-            <th>Carrera</th>
-            <th>Universidad</th>
-            <th>Modalidad</th>
-            <th>Monto</th>
-            <th>Estatus</th>
-          </tr>
-        </ng-template>
-        
-        <ng-template pTemplate="body" let-becado>
-          <tr>
-            <td class="font-bold">{{ becado.nombre_completo }}</td>
-            <td>{{ becado.carrera }}</td>
-            <td>{{ becado.universidad }}</td>
-            <td>{{ becado.modalidad }}</td>
-            <td class="text-primary font-bold">{{ formatCurrency(becado.monto_autorizado) }}</td>
-            <td>
-              <p-tag 
-                [severity]="getSeverity(becado.estatus)"
-                [value]="becado.estatusTexto">
-              </p-tag>
-            </td>
-          </tr>
-        </ng-template>
-      </p-table>
-      
-      <div class="text-right mt-3">
-        <button 
-          pButton 
-          pRipple 
-          label="Ver todos los becados" 
-          icon="pi pi-arrow-right"
-          class="p-button-text"
-          routerLink="/becados">
-        </button>
-      </div>
-    </p-panel>
   </div>
 </div>

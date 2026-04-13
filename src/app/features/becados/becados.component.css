@@ -108,3 +108,147 @@
     transform: translateY(0);
   }
 }
+
+.becados-container {
+  background: #f8fafc;
+  min-height: calc(100vh - 80px);
+  padding: 1.5rem;
+}
+
+/* Cards de resumen */
+.resumen-card {
+  background: white;
+  border-radius: 16px;
+  padding: 1.25rem;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+  transition: all 0.3s ease;
+  height: 100%;
+  border: 1px solid #e2e8f0;
+}
+
+.resumen-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 16px rgba(0,0,0,0.1);
+}
+
+.resumen-card.total {
+  border-left: 4px solid #1f3d66;
+}
+.resumen-card.erogado {
+  border-left: 4px solid #059669;
+}
+.resumen-card.pendiente {
+  border-left: 4px solid #d97706;
+}
+.resumen-card.perdido {
+  border-left: 4px solid #dc2626;
+}
+
+.resumen-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #f1f5f9;
+  color: #1f3d66;
+  font-size: 1.5rem;
+}
+
+.resumen-label {
+  font-size: 0.875rem;
+  color: #64748b;
+  display: block;
+  margin-bottom: 4px;
+}
+
+.resumen-value {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: #1e293b;
+  line-height: 1.2;
+}
+
+/* Badges */
+.badge-custom {
+  padding: 0.25rem 0.75rem;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  margin-left: 0.5rem;
+}
+
+/* Filtros */
+.filtro-container {
+  background: white;
+  border-radius: 8px;
+  padding: 1rem;
+  margin-bottom: 1.5rem;
+  border: 1px solid #e2e8f0;
+}
+
+/* Tabs personalizados */
+:host ::ng-deep .custom-tabs .p-tabview-nav {
+  background: transparent;
+  border: none;
+}
+
+:host ::ng-deep .custom-tabs .p-tabview-nav li .p-tabview-nav-link {
+  background: white;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px 8px 0 0;
+  padding: 1rem 2rem;
+  margin-right: 4px;
+}
+
+:host ::ng-deep .custom-tabs .p-tabview-nav li.p-highlight .p-tabview-nav-link {
+  border-color: #1f3d66;
+  border-bottom-color: transparent;
+  color: #1f3d66;
+}
+
+:host ::ng-deep .custom-tabs .p-tabview-panels {
+  background: white;
+  border: 1px solid #e2e8f0;
+  border-top: none;
+  border-radius: 0 8px 8px 8px;
+  padding: 1.5rem;
+}
+
+/* Tabla */
+:host ::ng-deep .p-datatable .p-datatable-tbody > tr:hover {
+  background: #f1f5f9;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .becados-container {
+    padding: 1rem;
+  }
+  
+  .resumen-value {
+    font-size: 1.25rem;
+  }
+}
+/* Contenedor de pagos dinámicos */
+.pagos-container {
+  background: #f8fafc;
+  border-radius: 12px;
+  padding: 1rem;
+  margin-top: 0.5rem;
+}
+
+.pago-item {
+  background: white;
+  border-radius: 8px;
+  padding: 0.75rem;
+  margin-bottom: 0.75rem;
+  border: 1px solid #e2e8f0;
+  transition: all 0.2s ease;
+}
+
+.pago-item:hover {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  border-color: #cbd5e1;
+}

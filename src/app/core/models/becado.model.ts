@@ -3,31 +3,63 @@ export interface Becado {
   nombre: string;
   apellido_p: string;
   apellido_m?: string | null;
-  estatus: boolean;  // 1 = activo, 0 = inactivo
+  estatus: boolean;
+  tipo_inactivo?: string;
   carrera: string;
   id_universidad: number;
   id_modalidad: number;
   monto_autorizado: number;
-  monto_1?: number | null;
-  monto_2?: number | null;
-  monto_3?: number | null;
-  monto_4?: number | null;
-  monto_5?: number | null;
-  monto_6?: number | null;
+  pagos?: Pago[];
   erogado: number;
   pendiente_erogar: number;
   
-  // Campos de JOIN (vienen del backend)
+  // Campos de JOIN
   universidad_nombre?: string;
   modalidad_tipo?: string;
-  
-  // Campos calculados
   nombre_completo?: string;
 }
 
+export interface Pago {
+  id?: number;
+  concepto: string;
+  monto: number;
+  fecha?: Date;
+}
+
+// ← ESTO ES LO QUE FALTA
 export interface ApiResponse<T> {
   success: boolean;
   message?: string;
   data?: T;
   count?: number;
+}
+
+export interface BecadoResumen {
+  id_becado: number;
+  nombre_completo: string;
+  carrera: string;
+  universidad: string;
+  modalidad: string;
+  monto_autorizado: number;
+  erogado: number;
+  pendiente: number;
+  estatus: boolean;
+  estatusTexto: string;
+  tipo_inactivo?: string;
+}
+
+export interface ResumenFinanciero {
+  bolsaTotal: number;
+  erogadoTotal: number;
+  pendienteTotal: number;
+  perdidoInactivos: number;
+  activos: number;
+  inactivos: number;
+}
+
+export interface TablaInactivos {
+  tipo: string;
+  cantidad: number;
+  montoPerdido: number;
+  becados: BecadoResumen[];
 }
