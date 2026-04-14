@@ -3,7 +3,7 @@ export interface Becado {
   nombre: string;
   apellido_p: string;
   apellido_m?: string | null;
-  estatus: boolean;
+  estatus: number;
   tipo_inactivo?: string;
   carrera: string;
   id_universidad: number;

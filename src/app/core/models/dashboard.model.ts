@@ -29,6 +29,8 @@ export interface DashboardStats {
   
   // Loading
   loading: boolean;
+
+  bolsaAsignada: number;  
 }
 
 export interface BecadoResumen {

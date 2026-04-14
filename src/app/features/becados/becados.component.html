@@ -3,17 +3,6 @@
   <div class="flex justify-content-between align-items-center mb-4">
     <h1 class="text-3xl font-bold text-900">Gestión de Becados</h1>
     <div class="flex gap-2">
-        <!-- Selector de año -->
-      <div class="field">
-        <label for="anio" class="text-sm font-medium">Año</label>
-        <p-dropdown 
-          id="anio"
-          [(ngModel)]="anioSeleccionado"
-          [options]="aniosDisponibles"
-          (onChange)="cambiarAnio()"
-          styleClass="p-inputtext-sm">
-        </p-dropdown>
-      </div>
       <p-button 
         label="Refrescar" 
         icon="pi pi-refresh" 
@@ -34,7 +23,6 @@
 
   <!-- Cards de resumen financiero -->
   <div class="grid mb-4">
-    <!-- Bolsa Total -->
     <div class="col-12 md:col-3">
       <div class="resumen-card total">
         <div class="flex align-items-center">
@@ -49,7 +37,6 @@
       </div>
     </div>
 
-    <!-- Erogado -->
     <div class="col-12 md:col-3">
       <div class="resumen-card erogado">
         <div class="flex align-items-center">
@@ -64,7 +51,6 @@
       </div>
     </div>
 
-    <!-- Pendiente -->
     <div class="col-12 md:col-3">
       <div class="resumen-card pendiente">
         <div class="flex align-items-center">
@@ -79,7 +65,6 @@
       </div>
     </div>
 
-    <!-- Perdido en Inactivos -->
     <div class="col-12 md:col-3">
       <div class="resumen-card perdido">
         <div class="flex align-items-center">
@@ -107,7 +92,6 @@
         </span>
       </ng-template>
 
-      <!-- Filtro de búsqueda -->
       <div class="filtro-container">
         <span class="p-input-icon-left w-full">
           <i class="pi pi-search"></i>
@@ -120,26 +104,48 @@
         </span>
       </div>
 
-      <!-- Tabla de activos -->
       <p-table 
-        [value]="activosFiltrados" 
+        #dtActivos
+        [value]="activos" 
         [loading]="loading"
         [paginator]="true" 
         [rows]="10"
         [showCurrentPageReport]="true"
         currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} becados activos"
         [rowsPerPageOptions]="[10, 25, 50]"
-        styleClass="p-datatable-striped">
+        [globalFilterFields]="['nombre_completo', 'carrera', 'universidad', 'modalidad']"
+        styleClass="p-datatable-striped p-datatable-gridlines">
+        
+        <ng-template pTemplate="caption">
+          <div class="flex justify-content-end align-items-center">
+            <div class="flex gap-2">
+              <span class="p-input-icon-left">
+                <i class="pi pi-search"></i>
+                <input 
+                  pInputText 
+                  type="text" 
+                  (input)="dtActivos.filterGlobal($any($event).target.value, 'contains')"
+                  placeholder="Buscar en todas las columnas..."
+                  class="p-inputtext-sm">
+              </span>
+              <p-button 
+                icon="pi pi-filter-slash" 
+                styleClass="p-button-outlined p-button-sm"
+                (onClick)="limpiarFiltros(dtActivos)">
+              </p-button>
+            </div>
+          </div>
+        </ng-template>
         
         <ng-template pTemplate="header">
           <tr>
-            <th>Nombre</th>
-            <th>Carrera</th>
-            <th>Universidad</th>
-            <th>Modalidad</th>
-            <th>Monto Autorizado</th>
-            <th>Erogado</th>
-            <th>Pendiente</th>
+            <th pSortableColumn="nombre_completo">Nombre <p-sortIcon field="nombre_completo"></p-sortIcon></th>
+            <th pSortableColumn="carrera">Carrera <p-sortIcon field="carrera"></p-sortIcon></th>
+            <th pSortableColumn="universidad">Universidad <p-sortIcon field="universidad"></p-sortIcon></th>
+            <th pSortableColumn="modalidad">Modalidad <p-sortIcon field="modalidad"></p-sortIcon></th>
+            <th pSortableColumn="monto_autorizado">Monto Autorizado <p-sortIcon field="monto_autorizado"></p-sortIcon></th>
+            <th pSortableColumn="erogado">Erogado <p-sortIcon field="erogado"></p-sortIcon></th>
+            <th pSortableColumn="pendiente">Pendiente <p-sortIcon field="pendiente"></p-sortIcon></th>
             <th style="width: 100px">Acciones</th>
           </tr>
         </ng-template>
@@ -155,16 +161,8 @@
             <td class="text-orange-600">{{ formatCurrency(becado.pendiente) }}</td>
             <td>
               <div class="flex gap-2">
-                <p-button 
-                  icon="pi pi-pencil" 
-                  styleClass="p-button-rounded p-button-text p-button-warning p-button-sm"
-                  (click)="editBecado(becado); $event.stopPropagation()">
-                </p-button>
-                <p-button 
-                  icon="pi pi-trash" 
-                  styleClass="p-button-rounded p-button-text p-button-danger p-button-sm"
-                  (click)="deleteBecado(becado); $event.stopPropagation()">
-                </p-button>
+                <p-button icon="pi pi-pencil" styleClass="p-button-rounded p-button-text p-button-warning p-button-sm" (click)="editBecado(becado); $event.stopPropagation()"></p-button>
+                <p-button icon="pi pi-trash" styleClass="p-button-rounded p-button-text p-button-danger p-button-sm" (click)="deleteBecado(becado); $event.stopPropagation()"></p-button>
               </div>
             </td>
           </tr>
@@ -175,12 +173,7 @@
             <td colspan="8" class="text-center p-4">
               <i class="pi pi-users text-4xl text-gray-400 block mb-3"></i>
               <p class="text-gray-500">No hay becados activos</p>
-              <p-button 
-                label="Crear becado" 
-                icon="pi pi-plus"
-                styleClass="p-button-outlined mt-3"
-                (onClick)="openNew()">
-              </p-button>
+              <p-button label="Crear becado" icon="pi pi-plus" styleClass="p-button-outlined mt-3" (onClick)="openNew()"></p-button>
             </td>
           </tr>
         </ng-template>
@@ -197,52 +190,32 @@
         </span>
       </ng-template>
 
-      <!-- Filtros -->
       <div class="filtro-container">
         <div class="grid">
           <div class="col-12 md:col-6">
             <span class="p-input-icon-left w-full">
               <i class="pi pi-search"></i>
-              <input 
-                pInputText 
-                type="text" 
-                [(ngModel)]="searchText" 
-                placeholder="Buscar..."
-                class="w-full">
+              <input pInputText type="text" [(ngModel)]="searchTextInactivos" placeholder="Buscar..." class="w-full">
             </span>
           </div>
           <div class="col-12 md:col-6">
-            <p-dropdown 
-              [(ngModel)]="filtroTipoInactivo"
-              [options]="tiposInactivo"
-              optionLabel="label"
-              optionValue="value"
-              placeholder="Filtrar por tipo"
-              styleClass="w-full">
-            </p-dropdown>
+            <p-dropdown [(ngModel)]="filtroTipoInactivo" [options]="tiposInactivo" optionLabel="label" optionValue="value" placeholder="Filtrar por tipo" styleClass="w-full"></p-dropdown>
           </div>
         </div>
       </div>
 
-      <!-- Acordeón por tipo de inactivo -->
       <p-accordion [multiple]="true">
         <p-accordionTab *ngFor="let grupo of inactivosFiltrados">
           <ng-template pTemplate="header">
             <div class="flex align-items-center justify-content-between w-full">
               <div class="flex align-items-center gap-2">
-                <p-tag 
-                  [severity]="getSeveridadPorTipo(grupo.tipo)"
-                  [value]="grupo.tipo">
-                </p-tag>
+                <p-tag [severity]="getSeveridadPorTipo(grupo.tipo)" [value]="grupo.tipo"></p-tag>
                 <span class="font-bold">{{ grupo.cantidad }} becados</span>
               </div>
-              <span class="text-red-600 font-bold">
-                {{ formatCurrency(grupo.montoPerdido) }}
-              </span>
+              <span class="text-red-600 font-bold">{{ formatCurrency(grupo.montoPerdido) }}</span>
             </div>
           </ng-template>
 
-          <!-- Tabla de becados de este tipo -->
           <p-table [value]="grupo.becados" styleClass="p-datatable-sm">
             <ng-template pTemplate="header">
               <tr>
@@ -255,7 +228,6 @@
                 <th></th>
               </tr>
             </ng-template>
-            
             <ng-template pTemplate="body" let-becado>
               <tr class="cursor-pointer" (click)="verDetalle(becado.id_becado)">
                 <td class="font-medium">{{ becado.nombre_completo }}</td>
@@ -265,11 +237,7 @@
                 <td>{{ formatCurrency(becado.erogado) }}</td>
                 <td class="text-red-600 font-bold">{{ formatCurrency(becado.pendiente) }}</td>
                 <td>
-                  <p-button 
-                    icon="pi pi-search" 
-                    styleClass="p-button-rounded p-button-text p-button-sm"
-                    (click)="verDetalle(becado.id_becado); $event.stopPropagation()">
-                  </p-button>
+                  <p-button icon="pi pi-search" styleClass="p-button-rounded p-button-text p-button-sm" (click)="verDetalle(becado.id_becado); $event.stopPropagation()"></p-button>
                 </td>
               </tr>
             </ng-template>
@@ -277,7 +245,6 @@
         </p-accordionTab>
       </p-accordion>
 
-      <!-- Mensaje si no hay inactivos -->
       <div *ngIf="inactivosFiltrados.length === 0" class="text-center p-5">
         <i class="pi pi-check-circle text-4xl text-green-400 block mb-3"></i>
         <p class="text-gray-500">¡No hay becados inactivos!</p>
@@ -300,126 +267,49 @@
       <!-- SECCIÓN 1: DATOS PERSONALES -->
       <p-fieldset legend="Datos Personales" [toggleable]="true" [collapsed]="false" class="mb-4">
         <div class="grid">
-          <!-- Apellido Paterno -->
           <div class="col-12 md:col-4">
             <div class="field">
-              <label for="apellido_p" class="block font-medium mb-2">
-                Apellido Paterno <span class="text-red-500">*</span>
-              </label>
-              <input 
-                pInputText 
-                id="apellido_p" 
-                formControlName="apellido_p" 
-                class="w-full"
-                placeholder="Ej: García"
-                [class.ng-invalid]="submitted && becadoForm.get('apellido_p')?.invalid">
+              <label for="apellido_p" class="block font-medium mb-2">Apellido Paterno <span class="text-red-500">*</span></label>
+              <input pInputText id="apellido_p" formControlName="apellido_p" class="w-full" placeholder="Ej: García">
               @if (submitted && becadoForm.get('apellido_p')?.invalid) {
-                <small class="p-error block mt-1">
-                  @if (becadoForm.get('apellido_p')?.errors?.['required']) {
-                    El apellido paterno es requerido
-                  }
-                  @if (becadoForm.get('apellido_p')?.errors?.['minlength']) {
-                    Mínimo 2 caracteres
-                  }
-                </small>
+                <small class="p-error block mt-1">El apellido paterno es requerido</small>
               }
             </div>
           </div>
-
-          <!-- Apellido Materno -->
           <div class="col-12 md:col-4">
             <div class="field">
               <label for="apellido_m" class="block font-medium mb-2">Apellido Materno</label>
-              <input 
-                pInputText 
-                id="apellido_m" 
-                formControlName="apellido_m" 
-                class="w-full"
-                placeholder="Ej: López">
+              <input pInputText id="apellido_m" formControlName="apellido_m" class="w-full" placeholder="Ej: López">
             </div>
           </div>
-
-          <!-- Nombre -->
           <div class="col-12 md:col-4">
             <div class="field">
-              <label for="nombre" class="block font-medium mb-2">
-                Nombre <span class="text-red-500">*</span>
-              </label>
-              <input 
-                pInputText 
-                id="nombre" 
-                formControlName="nombre" 
-                class="w-full"
-                placeholder="Ej: Juan"
-                [class.ng-invalid]="submitted && becadoForm.get('nombre')?.invalid">
+              <label for="nombre" class="block font-medium mb-2">Nombre <span class="text-red-500">*</span></label>
+              <input pInputText id="nombre" formControlName="nombre" class="w-full" placeholder="Ej: Juan">
               @if (submitted && becadoForm.get('nombre')?.invalid) {
-                <small class="p-error block mt-1">
-                  @if (becadoForm.get('nombre')?.errors?.['required']) {
-                    El nombre es requerido
-                  }
-                  @if (becadoForm.get('nombre')?.errors?.['minlength']) {
-                    Mínimo 2 caracteres
-                  }
-                </small>
+                <small class="p-error block mt-1">El nombre es requerido</small>
               }
             </div>
           </div>
-
-          <!-- Carrera -->
           <div class="col-12 md:col-8">
             <div class="field">
-              <label for="carrera" class="block font-medium mb-2">
-                Carrera <span class="text-red-500">*</span>
-              </label>
-              <input 
-                pInputText 
-                id="carrera" 
-                formControlName="carrera" 
-                class="w-full"
-                placeholder="Ej: Ingeniería en Sistemas Computacionales"
-                [class.ng-invalid]="submitted && becadoForm.get('carrera')?.invalid">
+              <label for="carrera" class="block font-medium mb-2">Carrera <span class="text-red-500">*</span></label>
+              <input pInputText id="carrera" formControlName="carrera" class="w-full" placeholder="Ej: Ingeniería en Sistemas Computacionales">
               @if (submitted && becadoForm.get('carrera')?.invalid) {
                 <small class="p-error block mt-1">La carrera es requerida</small>
               }
             </div>
           </div>
-
-          <!-- Estatus -->
           <div class="col-12 md:col-4">
             <div class="field">
               <label for="estatus" class="block font-medium mb-2">Estatus</label>
-              <p-dropdown 
-                id="estatus"
-                formControlName="estatus"
-                [options]="estatusOptions"
-                optionLabel="label"
-                optionValue="value"
-                placeholder="Selecciona estatus"
-                styleClass="w-full"
-                (onChange)="onEstatusChange($event.value)">
-              </p-dropdown>
+              <p-dropdown id="estatus" formControlName="estatus" [options]="estatusOptions" optionLabel="label" optionValue="value" placeholder="Selecciona estatus" styleClass="w-full" (onChange)="onEstatusChange($event.value)"></p-dropdown>
             </div>
           </div>
-
-          <!-- Tipo de Inactivo (visible solo si estatus es false) -->
           <div class="col-12" *ngIf="becadoForm.get('estatus')?.value === false">
             <div class="field">
-              <label for="tipo_inactivo" class="block font-medium mb-2">
-                Tipo de Inactivo <span class="text-red-500">*</span>
-              </label>
-              <p-dropdown 
-                id="tipo_inactivo"
-                formControlName="tipo_inactivo"
-                [options]="tiposInactivo.slice(1)"
-                optionLabel="label"
-                optionValue="value"
-                placeholder="Selecciona el tipo de baja"
-                styleClass="w-full"
-                [class.ng-invalid]="submitted && becadoForm.get('tipo_inactivo')?.invalid">
-              </p-dropdown>
-              @if (submitted && becadoForm.get('tipo_inactivo')?.invalid) {
-                <small class="p-error block mt-1">El tipo de inactivo es requerido</small>
-              }
+              <label for="tipo_inactivo" class="block font-medium mb-2">Tipo de Inactivo <span class="text-red-500">*</span></label>
+              <p-dropdown id="tipo_inactivo" formControlName="tipo_inactivo" [options]="tiposInactivo.slice(1)" optionLabel="label" optionValue="value" placeholder="Selecciona el tipo de baja" styleClass="w-full" [disabled]="becadoForm.get('estatus')?.value !== false"></p-dropdown>
             </div>
           </div>
         </div>
@@ -428,199 +318,87 @@
       <!-- SECCIÓN 2: ASIGNACIÓN ACADÉMICA -->
       <p-fieldset legend="Asignación Académica" [toggleable]="true" [collapsed]="false" class="mb-4">
         <div class="grid">
-          <!-- Universidad -->
           <div class="col-12 md:col-6">
             <div class="field">
-              <label for="id_universidad" class="block font-medium mb-2">
-                Universidad <span class="text-red-500">*</span>
-              </label>
-              <p-dropdown 
-                id="id_universidad"
-                formControlName="id_universidad"
-                [options]="universidades"
-                optionLabel="nombre"
-                optionValue="id_universidad"
-                [filter]="true"
-                placeholder="Selecciona una universidad"
-                styleClass="w-full"
-                [showClear]="false"
-                [class.ng-invalid]="submitted && becadoForm.get('id_universidad')?.invalid">
-              </p-dropdown>
-              @if (submitted && becadoForm.get('id_universidad')?.invalid) {
-                <small class="p-error block mt-1">La universidad es requerida</small>
-              }
+              <label for="id_universidad" class="block font-medium mb-2">Universidad <span class="text-red-500">*</span></label>
+              <p-dropdown id="id_universidad" formControlName="id_universidad" [options]="universidades" optionLabel="nombre" optionValue="id_universidad" [filter]="true" placeholder="Selecciona una universidad" styleClass="w-full"></p-dropdown>
             </div>
           </div>
-
-          <!-- Modalidad -->
           <div class="col-12 md:col-6">
             <div class="field">
-              <label for="id_modalidad" class="block font-medium mb-2">
-                Modalidad <span class="text-red-500">*</span>
-              </label>
-              <p-dropdown 
-                id="id_modalidad"
-                formControlName="id_modalidad"
-                [options]="modalidades"
-                optionLabel="tipo"
-                optionValue="id_modalidad"
-                [filter]="true"
-                placeholder="Selecciona una modalidad"
-                styleClass="w-full"
-                [showClear]="false"
-                [class.ng-invalid]="submitted && becadoForm.get('id_modalidad')?.invalid">
-              </p-dropdown>
-              @if (submitted && becadoForm.get('id_modalidad')?.invalid) {
-                <small class="p-error block mt-1">La modalidad es requerida</small>
-              }
+              <label for="id_modalidad" class="block font-medium mb-2">Modalidad <span class="text-red-500">*</span></label>
+              <p-dropdown id="id_modalidad" formControlName="id_modalidad" [options]="modalidades" optionLabel="tipo" optionValue="id_modalidad" [filter]="true" placeholder="Selecciona una modalidad" styleClass="w-full"></p-dropdown>
             </div>
           </div>
         </div>
       </p-fieldset>
 
       <!-- SECCIÓN 3: MONTOS Y FINANZAS -->
-<p-fieldset legend="Información Financiera" [toggleable]="true" [collapsed]="false" class="mb-4">
-  <div class="grid">
-    <!-- Monto Autorizado -->
-    <div class="col-12 md:col-4">
-      <div class="field">
-        <label for="monto_autorizado" class="block font-medium mb-2">
-          Monto Autorizado <span class="text-red-500">*</span>
-        </label>
-        <span class="p-input-icon-left w-full">
-          <i class="pi pi-dollar"></i>
-          <p-inputNumber 
-            id="monto_autorizado"
-            formControlName="monto_autorizado"
-            mode="currency"
-            currency="MXN"
-            locale="es-MX"
-            class="w-full"
-            (onInput)="calcularTotales()"
-            [class.ng-invalid]="submitted && becadoForm.get('monto_autorizado')?.invalid">
-          </p-inputNumber>
-        </span>
-        @if (submitted && becadoForm.get('monto_autorizado')?.invalid) {
-          <small class="p-error block mt-1">
-            @if (becadoForm.get('monto_autorizado')?.errors?.['required']) {
-              El monto autorizado es requerido
-            }
-            @if (becadoForm.get('monto_autorizado')?.errors?.['min']) {
-              El monto debe ser mayor a 0
-            }
-          </small>
-        }
-      </div>
-    </div>
-
-    <!-- Erogado (solo lectura, se calcula automáticamente) -->
-    <div class="col-12 md:col-4">
-      <div class="field">
-        <label class="block font-medium mb-2">Erogado</label>
-        <div class="bg-gray-100 p-3 border-round">
-          <span class="text-xl font-bold text-green-700">
-            {{ formatCurrency(becadoForm.get('erogado')?.value || 0) }}
-          </span>
+      <p-fieldset legend="Información Financiera" [toggleable]="true" [collapsed]="false" class="mb-4">
+        <div class="grid">
+          <div class="col-12 md:col-4">
+            <div class="field">
+              <label for="monto_autorizado" class="block font-medium mb-2">Monto Autorizado <span class="text-red-500">*</span></label>
+              <p-inputNumber id="monto_autorizado" formControlName="monto_autorizado" mode="currency" currency="MXN" locale="es-MX" class="w-full" (onInput)="calcularTotales()"></p-inputNumber>
+            </div>
+          </div>
+          <div class="col-12 md:col-4">
+            <div class="field">
+              <label class="block font-medium mb-2">Erogado</label>
+              <div class="bg-gray-100 p-3 border-round">
+                <span class="text-xl font-bold text-green-700">{{ formatCurrency(becadoForm.get('erogado')?.value || 0) }}</span>
+              </div>
+            </div>
+          </div>
+          <div class="col-12 md:col-4">
+            <div class="field">
+              <label class="block font-medium mb-2">Pendiente por Erogar</label>
+              <div class="bg-gray-100 p-3 border-round">
+                <span class="text-xl font-bold text-orange-600">{{ formatCurrency(becadoForm.get('pendiente_erogar')?.value || 0) }}</span>
+              </div>
+            </div>
+          </div>
         </div>
-      </div>
-    </div>
 
-    <!-- Pendiente por Erogar (solo lectura) -->
-    <div class="col-12 md:col-4">
-      <div class="field">
-        <label class="block font-medium mb-2">Pendiente por Erogar</label>
-        <div class="bg-gray-100 p-3 border-round">
-          <span class="text-xl font-bold text-orange-600">
-            {{ formatCurrency(becadoForm.get('pendiente_erogar')?.value || 0) }}
-          </span>
+        <p-divider align="left">
+          <span class="font-medium">Pagos Realizados</span>
+        </p-divider>
+
+        <div class="pagos-container">
+          <div *ngFor="let pago of pagos; let i = index" class="pago-item">
+            <div class="grid align-items-center">
+              <div class="col-12 md:col-5">
+                <input pInputText [(ngModel)]="pago.concepto" [ngModelOptions]="{standalone: true}" placeholder="Concepto del pago" class="w-full">
+              </div>
+              <div class="col-12 md:col-5">
+                <p-inputNumber [(ngModel)]="pago.monto" [ngModelOptions]="{standalone: true}" mode="currency" currency="MXN" locale="es-MX" class="w-full" (onInput)="calcularTotales()"></p-inputNumber>
+              </div>
+              <div class="col-12 md:col-2">
+                <p-button icon="pi pi-trash" styleClass="p-button-rounded p-button-text p-button-danger" (onClick)="eliminarPago(i)"></p-button>
+              </div>
+            </div>
+          </div>
+
+          <div class="mt-3">
+            <p-button label="Agregar Pago" icon="pi pi-plus" styleClass="p-button-outlined p-button-sm" (onClick)="agregarPago()"></p-button>
+          </div>
+
+          <div class="bg-blue-50 p-3 border-round mt-3">
+            <div class="flex justify-content-between">
+              <span class="font-medium">Número de pagos registrados:</span>
+              <span class="font-bold">{{ pagos.length }}</span>
+            </div>
+            <div class="flex justify-content-between mt-2">
+              <span class="font-medium">Suma total de pagos (Erogado):</span>
+              <span class="font-bold text-green-700">{{ formatCurrency(calcularSumaPagos()) }}</span>
+            </div>
+          </div>
         </div>
-      </div>
-    </div>
-  </div>
+      </p-fieldset>
 
-  <p-divider align="left">
-    <span class="font-medium">Pagos Realizados</span>
-  </p-divider>
-
-  <!-- PAGOS DINÁMICOS -->
-  <div class="pagos-container">
-    <!-- Lista de pagos existentes -->
-    <div *ngFor="let pago of pagos; let i = index" class="pago-item">
-      <div class="grid align-items-center">
-        <div class="col-12 md:col-5">
-          <span class="p-input-icon-left w-full">
-            <i class="pi pi-tag"></i>
-            <input 
-              pInputText 
-              [(ngModel)]="pago.concepto" 
-              [ngModelOptions]="{standalone: true}"
-              placeholder="Concepto del pago (Ej: Mensualidad Ene)"
-              class="w-full">
-          </span>
-        </div>
-        <div class="col-12 md:col-5">
-          <span class="p-input-icon-left w-full">
-            <i class="pi pi-dollar"></i>
-            <p-inputNumber 
-              [(ngModel)]="pago.monto"
-              [ngModelOptions]="{standalone: true}"
-              mode="currency"
-              currency="MXN"
-              locale="es-MX"
-              class="w-full"
-              (onInput)="calcularTotales()">
-            </p-inputNumber>
-          </span>
-        </div>
-        <div class="col-12 md:col-2">
-          <p-button 
-            icon="pi pi-trash" 
-            styleClass="p-button-rounded p-button-text p-button-danger"
-            (onClick)="eliminarPago(i)">
-          </p-button>
-        </div>
-      </div>
-    </div>
-
-    <!-- Botón para agregar nuevo pago -->
-    <div class="mt-3">
-      <p-button 
-        label="Agregar Pago" 
-        icon="pi pi-plus" 
-        styleClass="p-button-outlined p-button-sm"
-        (onClick)="agregarPago()">
-      </p-button>
-    </div>
-
-    <!-- Resumen de pagos -->
-    <div class="bg-blue-50 p-3 border-round mt-3">
-      <div class="flex justify-content-between">
-        <span class="font-medium">Número de pagos registrados:</span>
-        <span class="font-bold">{{ pagos.length }}</span>
-      </div>
-      <div class="flex justify-content-between mt-2">
-        <span class="font-medium">Suma total de pagos (Erogado):</span>
-        <span class="font-bold text-green-700">{{ formatCurrency(calcularSumaPagos()) }}</span>
-      </div>
-    </div>
-  </div>
-</p-fieldset>
-
-      <!-- Botones dentro del form -->
       <div class="flex justify-content-end gap-2 mt-3">
-        <p-button 
-          label="Cancelar" 
-          icon="pi pi-times" 
-          styleClass="p-button-text"
-          [disabled]="loading"
-          (onClick)="hideDialog()">
-        </p-button>
-        <p-button 
-          label="Guardar" 
-          icon="pi pi-check" 
-          [loading]="loading"
-          (onClick)="saveBecado()">
-        </p-button>
+        <p-button label="Cancelar" icon="pi pi-times" styleClass="p-button-text" [disabled]="loading" (onClick)="hideDialog()"></p-button>
+        <p-button label="Guardar" icon="pi pi-check" [loading]="loading" (onClick)="saveBecado()"></p-button>
       </div>
     </form>
   </p-dialog>
