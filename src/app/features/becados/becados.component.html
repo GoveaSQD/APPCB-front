@@ -237,6 +237,19 @@
                 <td>{{ formatCurrency(becado.erogado) }}</td>
                 <td class="text-red-600 font-bold">{{ formatCurrency(becado.pendiente) }}</td>
                 <td>
+                    <div class="flex gap-2">
+                      <p-button 
+                        icon="pi pi-eye" 
+                        styleClass="p-button-rounded p-button-text p-button-info p-button-sm"
+                        (click)="verDetalle(becado.id_becado); $event.stopPropagation()">
+                      </p-button>
+                      <p-button 
+                        icon="pi pi-refresh" 
+                        styleClass="p-button-rounded p-button-text p-button-success p-button-sm"
+                        pTooltip="Reactivar becado"
+                        (click)="reactivarBecado(becado); $event.stopPropagation()">
+                      </p-button>
+                    </div>
                   <p-button icon="pi pi-search" styleClass="p-button-rounded p-button-text p-button-sm" (click)="verDetalle(becado.id_becado); $event.stopPropagation()"></p-button>
                 </td>
               </tr>

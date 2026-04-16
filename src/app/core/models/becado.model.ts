@@ -4,7 +4,7 @@ export interface Becado {
   apellido_p: string;
   apellido_m?: string | null;
   estatus: number;
-  tipo_inactivo?: string;
+  tipo_inactivo?: string | null;
   carrera: string;
   id_universidad: number;
   id_modalidad: number;

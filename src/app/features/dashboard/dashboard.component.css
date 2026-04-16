@@ -129,4 +129,14 @@
     height: 44px;
     font-size: 1.25rem;
   }
+
+  /* Para el dropdown de años */
+:host ::ng-deep .p-dropdown {
+  min-width: 150px;
+}
+
+/* Para los botones en el header */
+.dashboard-container .flex.gap-2 {
+  flex-wrap: wrap;
+}
 }

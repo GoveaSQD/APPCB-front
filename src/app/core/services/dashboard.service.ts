@@ -1,67 +1,66 @@
+// dashboard.service.ts
 import { Injectable } from '@angular/core';
-import { Observable, forkJoin, map, of } from 'rxjs';
-import { catchError } from 'rxjs/operators';
+import { HttpClient } from '@angular/common/http';
+import { Observable, map } from 'rxjs';
+import { environment } from '../../../environments/environment';
 import { BecadoService } from './becado.service';
 import { UniversidadService } from './universidad.service';
 import { ModalidadService } from './modalidad.service';
-
-export interface DashboardStats {
-  bolsaTotal: number;
-  erogadoTotal: number;
-  pendienteTotal: number;
-  perdidoInactivos: number;
-  totalBecados: number;
-  totalUniversidades: number;
-  totalModalidades: number;
-  becadosActivos: number;
-  becadosInactivos: number;
-}
 
 @Injectable({
   providedIn: 'root'
 })
 export class DashboardService {
   constructor(
+    private http: HttpClient,
     private becadoService: BecadoService,
     private universidadService: UniversidadService,
     private modalidadService: ModalidadService
   ) {}
 
-  
-  getDashboardStats(): Observable<DashboardStats> {
-    return forkJoin({
-      becados: this.becadoService.getAll().pipe(catchError(() => of({ data: [] }))),
-      universidades: this.universidadService.getAll().pipe(catchError(() => of({ data: [] }))),
-      modalidades: this.modalidadService.getAll().pipe(catchError(() => of({ data: [] })))
-    }).pipe(
-      map(({ becados, universidades, modalidades }) => {
-        const becadosData = (becados as any).data || [];
-        const universidadesData = (universidades as any).data || [];
-        const modalidadesData = (modalidades as any).data || [];
-
-        const activos = becadosData.filter((b: any) => b.estatus === true);
-        const inactivos = becadosData.filter((b: any) => b.estatus === false);
-
-        const bolsaTotal = becadosData.reduce((sum: number, b: any) => sum + (b.monto_autorizado || 0), 0);
-        const erogadoTotal = becadosData.reduce((sum: number, b: any) => sum + (b.erogado || 0), 0);
+  getDashboardStats(): Observable<any> {
+    // Obtener todos los datos necesarios en paralelo
+    return new Observable((observer) => {
+      Promise.all([
+        this.becadoService.getAll().toPromise(),
+        this.universidadService.getAll().toPromise(),
+        this.modalidadService.getAll().toPromise()
+      ]).then(([becadosResp, universidadesResp, modalidadesResp]) => {
+        const becados = becadosResp?.data || [];
+        const universidades = universidadesResp?.data || [];
+        const modalidades = modalidadesResp?.data || [];
+        
+        // Calcular estadísticas
+        const becadosActivos = becados.filter((b: any) => b.estatus === 1).length;
+        const becadosInactivos = becados.filter((b: any) => b.estatus === 0).length;
+        
+        const bolsaTotal = becados.reduce((sum: number, b: any) => sum + (Number(b.monto_autorizado) || 0), 0);
+        const erogadoTotal = becados.reduce((sum: number, b: any) => sum + (Number(b.erogado) || 0), 0);
         const pendienteTotal = bolsaTotal - erogadoTotal;
         
-        const perdidoInactivos = inactivos.reduce((sum: number, b: any) => {
-          return sum + ((b.monto_autorizado || 0) - (b.erogado || 0));
-        }, 0);
-
-        return {
+        // Perdido: solo lo pendiente de los inactivos
+        const perdidoInactivos = becados
+          .filter((b: any) => b.estatus === 0)
+          .reduce((sum: number, b: any) => {
+            const pendiente = (Number(b.monto_autorizado) || 0) - (Number(b.erogado) || 0);
+            return sum + (pendiente > 0 ? pendiente : 0);
+          }, 0);
+        
+        observer.next({
           bolsaTotal,
           erogadoTotal,
           pendienteTotal,
           perdidoInactivos,
-          totalBecados: becadosData.length,
-          totalUniversidades: universidadesData.length,
-          totalModalidades: modalidadesData.length,
-          becadosActivos: activos.length,
-          becadosInactivos: inactivos.length
-        };
-      })
-    );
+          totalBecados: becados.length,
+          totalUniversidades: universidades.length,
+          totalModalidades: modalidades.length,
+          becadosActivos,
+          becadosInactivos
+        });
+        observer.complete();
+      }).catch(error => {
+        observer.error(error);
+      });
+    });
   }
 }

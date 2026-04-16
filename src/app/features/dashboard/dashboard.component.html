@@ -1,6 +1,6 @@
 <div class="dashboard-container">
   <!-- Header con bienvenida y acciones -->
-  <div class="flex justify-content-between align-items-center mb-4">
+  <div class="flex justify-content-between align-items-center mb-4 flex-wrap gap-3">
     <div>
       <h1 class="text-3xl font-bold text-900 mb-1">
         ¡Bienvenido, {{ usuario?.nombre || 'Usuario' }}!
@@ -10,7 +10,31 @@
         {{ fechaActual | date:'EEEE, d \'de\' MMMM \'de\' yyyy' }}
       </p>
     </div>
-    <div>
+    <div class="flex gap-2">
+      <!-- Selector de año -->
+      <p-dropdown 
+        [(ngModel)]="anioSeleccionado"
+        [options]="aniosDisponibles"
+        placeholder="Seleccionar año"
+        styleClass="p-inputtext-sm"
+        (onChange)="cambiarAnio()">
+        <ng-template pTemplate="selectedItem">
+          <div class="flex align-items-center gap-2">
+            <i class="pi pi-calendar"></i>
+            <span>{{ anioSeleccionado || 'Seleccionar año' }}</span>
+          </div>
+        </ng-template>
+      </p-dropdown>
+      
+      <!-- Botón exportar -->
+      <p-button 
+        label="Exportar" 
+        icon="pi pi-file-pdf" 
+        styleClass="p-button-danger p-button-outlined"
+        (onClick)="exportarReporte()"
+        [loading]="exportando"> Reporte Financiero
+      </p-button>
+      
       <p-button 
         label="Refrescar" 
         icon="pi pi-refresh" 
@@ -23,7 +47,7 @@
 
   <p-toast position="top-right"></p-toast>
 
-  <!-- Cards de resumen financiero -->
+  <!-- Cards de resumen financiero (igual, solo cambia que usa stats filtrados) -->
   <div class="grid">
     <!-- Bolsa Total -->
     <div class="col-12 md:col-6 lg:col-3">
@@ -115,12 +139,12 @@
   <div class="grid mt-4">
     <div class="col-12">
       <div class="resumen-card">
-        <div class="flex justify-content-between align-items-center">
+        <div class="flex justify-content-between align-items-center flex-wrap gap-3">
           <div>
             <span class="resumen-label">Total Becados</span>
             <div class="resumen-value">{{ stats.totalBecados }}</div>
           </div>
-          <div class="flex gap-4">
+          <div class="flex gap-4 flex-wrap">
             <div class="text-center">
               <span class="badge bg-green-100 text-green-700">{{ stats.becadosActivos }}</span>
               <p class="text-sm text-600 mt-1">Activos</p>

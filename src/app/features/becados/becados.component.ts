@@ -45,7 +45,7 @@ export interface BecadoResumen {
   pendiente: number;
   estatus: boolean;
   estatusTexto: string;
-  tipo_inactivo?: string;
+  tipo_inactivo?: string | null;
   // Campos adicionales para edición
   nombre?: string;
   apellido_p?: string;
@@ -237,9 +237,8 @@ loadModalidades(): void {
   // ============== PROCESAMIENTO DE DATOS ==============
 procesarDatos(): void {
   console.log('=== PROCESANDO DATOS ===');
-  console.log('Total becados:', this.becados.length);
   
-  // Asegurar que todos los becados tengan pagos como array
+  // Asegurar que todos los becados tengan pagos como array y números correctos
   this.becados = this.becados.map(b => ({
     ...b,
     pagos: b.pagos || [],
@@ -253,11 +252,6 @@ procesarDatos(): void {
     .filter(b => b.estatus === 1)
     .map(b => this.mapearABecadoResumen(b));
   
-  console.log('Activos procesados:', this.activos.length);
-  this.activos.forEach(a => {
-    console.log(`  - ${a.nombre_completo}: Erogado=${a.erogado}, Pendiente=${a.pendiente}`);
-  });
-
   // Procesar inactivos (estatus === 0)
   const inactivos = this.becados.filter(b => b.estatus === 0);
   
@@ -267,23 +261,22 @@ procesarDatos(): void {
     const becadosTipo = inactivos.filter(b => b.tipo_inactivo === t.value);
     
     if (becadosTipo.length > 0) {
+      // Calcular monto perdido: suma de lo que NO se ha erogado (pendiente)
       const montoPerdido = becadosTipo.reduce((sum, b) => {
-        const erogado = b.pagos && b.pagos.length > 0 
-          ? b.pagos.reduce((total, pago) => total + this.parseNumber(pago.monto), 0)
-          : this.parseNumber(b.erogado);
-        return sum + (this.parseNumber(b.monto_autorizado) - erogado);
+        const pendiente = (b.monto_autorizado || 0) - (b.erogado || 0);
+        return sum + (pendiente > 0 ? pendiente : 0);
       }, 0);
       
       this.inactivosPorTipo.push({
         tipo: t.value,
         cantidad: becadosTipo.length,
-        montoPerdido,
+        montoPerdido: montoPerdido,
         becados: becadosTipo.map(b => this.mapearABecadoResumen(b))
       });
     }
   });
   
-  console.log('Grupos inactivos:', this.inactivosPorTipo.length);
+  console.log('Monto perdido total:', this.calcularPerdidoInactivos());
 }
 
 mapearABecadoResumen(becado: Becado): BecadoResumen {
@@ -756,11 +749,13 @@ onEstatusChange(estatus: boolean): void {
   }
 
   calcularPerdidoInactivos(): number {
-  const inactivos = this.becados.filter(b => b.estatus === 0);
-  return inactivos.reduce((sum, b) => {
-    return sum + ((b.monto_autorizado || 0) - (b.erogado || 0));
-  }, 0);
-}
+    const inactivos = this.becados.filter(b => b.estatus === 0);
+    return inactivos.reduce((sum, b) => {
+      // Solo el pendiente (no erogado) es lo que se pierde
+      const pendiente = (Number(b.monto_autorizado) || 0) - (Number(b.erogado) || 0);
+      return sum + (pendiente > 0 ? pendiente : 0);
+    }, 0);
+  }
 
   getTotalInactivos(): number {
     if (!this.inactivosPorTipo || this.inactivosPorTipo.length === 0) {
@@ -844,5 +839,83 @@ limpiarFiltros(table: any): void {
       life: 2000
     });
   }
+}
+
+reactivarBecado(becado: BecadoResumen): void {
+  this.confirmationService.confirm({
+    message: `¿Estás seguro de reactivar al becado <strong>${becado.nombre_completo}</strong>?`,
+    header: 'Confirmar reactivación',
+    icon: 'pi pi-exclamation-triangle',
+    acceptLabel: 'Sí, reactivar',
+    rejectLabel: 'Cancelar',
+    acceptButtonStyleClass: 'p-button-success',
+    accept: () => {
+      // Primero obtener todos los datos del becado
+      this.becadoService.getById(becado.id_becado).subscribe({
+        next: (response) => {
+          if (response.success && response.data) {
+            const becadoCompleto = response.data;
+            
+            // Crear objeto con todos los datos necesarios
+            const reactivarData = {
+              nombre: becadoCompleto.nombre,
+              apellido_p: becadoCompleto.apellido_p,
+              apellido_m: becadoCompleto.apellido_m || '',
+              carrera: becadoCompleto.carrera,
+              id_universidad: becadoCompleto.id_universidad,
+              id_modalidad: becadoCompleto.id_modalidad,
+              monto_autorizado: becadoCompleto.monto_autorizado,
+              erogado: becadoCompleto.erogado,
+              pendiente_erogar: becadoCompleto.pendiente_erogar,
+              estatus: 1,  // Cambiar a activo
+              tipo_inactivo: null,  // Limpiar tipo_inactivo
+              pagos: becadoCompleto.pagos || []
+            };
+            
+            console.log('Reactivando con datos:', reactivarData);
+            
+            this.becadoService.update(becado.id_becado, reactivarData).subscribe({
+              next: (updateResponse) => {
+                if (updateResponse.success) {
+                  this.messageService.add({
+                    severity: 'success',
+                    summary: 'Éxito',
+                    detail: 'Becado reactivado correctamente',
+                    life: 3000
+                  });
+                  this.cargarTodo();
+                } else {
+                  this.messageService.add({
+                    severity: 'error',
+                    summary: 'Error',
+                    detail: updateResponse.message || 'No se pudo reactivar el becado',
+                    life: 5000
+                  });
+                }
+              },
+              error: (error) => {
+                console.error('Error al reactivar:', error);
+                this.messageService.add({
+                  severity: 'error',
+                  summary: 'Error',
+                  detail: error.error?.message || 'Error al reactivar el becado',
+                  life: 5000
+                });
+              }
+            });
+          }
+        },
+        error: (error) => {
+          console.error('Error al obtener becado:', error);
+          this.messageService.add({
+            severity: 'error',
+            summary: 'Error',
+            detail: 'No se pudo obtener la información del becado',
+            life: 5000
+          });
+        }
+      });
+    }
+  });
 }
 }
