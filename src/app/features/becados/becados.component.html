@@ -10,6 +10,7 @@
         (onClick)="refrescar()">
       </p-button>
       <p-button 
+        *ngIf="canEditBecado"
         label="Nuevo Becado" 
         icon="pi pi-user-plus" 
         styleClass="p-button-success"
@@ -161,8 +162,15 @@
             <td class="text-orange-600">{{ formatCurrency(becado.pendiente) }}</td>
             <td>
               <div class="flex gap-2">
-                <p-button icon="pi pi-pencil" styleClass="p-button-rounded p-button-text p-button-warning p-button-sm" (click)="editBecado(becado); $event.stopPropagation()"></p-button>
-                <p-button icon="pi pi-trash" styleClass="p-button-rounded p-button-text p-button-danger p-button-sm" (click)="deleteBecado(becado); $event.stopPropagation()"></p-button>
+                <p-button *ngIf="canEditBecado" icon="pi pi-pencil" styleClass="p-button-rounded p-button-text p-button-warning p-button-sm" (click)="editBecado(becado); $event.stopPropagation()"></p-button>
+                <p-button 
+                  *ngIf="canManagePayments && !canEditBecado"
+                  icon="pi pi-credit-card" 
+                  styleClass="p-button-rounded p-button-text p-button-success p-button-sm" 
+                  pTooltip="Gestionar pagos"
+                  (click)="editBecado(becado); $event.stopPropagation()">
+                </p-button>
+                <p-button *ngIf="canEditBecado" icon="pi pi-trash" styleClass="p-button-rounded p-button-text p-button-danger p-button-sm" (click)="deleteBecado(becado); $event.stopPropagation()"></p-button>
               </div>
             </td>
           </tr>
@@ -283,22 +291,22 @@
           <div class="col-12 md:col-4">
             <div class="field">
               <label for="apellido_p" class="block font-medium mb-2">Apellido Paterno <span class="text-red-500">*</span></label>
-              <input pInputText id="apellido_p" formControlName="apellido_p" class="w-full" placeholder="Ej: García">
-              @if (submitted && becadoForm.get('apellido_p')?.invalid) {
-                <small class="p-error block mt-1">El apellido paterno es requerido</small>
-              }
+              <input pInputText id="apellido_p" formControlName="apellido_p" class="w-full" placeholder="Ej: García" [disabled]="!canEditBecado">
+                @if (submitted && becadoForm.get('apellido_p')?.invalid && canEditBecado) {
+              <small class="p-error block mt-1">El apellido paterno es requerido</small>
+        }
             </div>
           </div>
           <div class="col-12 md:col-4">
             <div class="field">
               <label for="apellido_m" class="block font-medium mb-2">Apellido Materno</label>
-              <input pInputText id="apellido_m" formControlName="apellido_m" class="w-full" placeholder="Ej: López">
+              <input pInputText id="apellido_m" formControlName="apellido_m" class="w-full" placeholder="Ej: López" [disabled]="!canEditBecado">
             </div>
           </div>
           <div class="col-12 md:col-4">
             <div class="field">
               <label for="nombre" class="block font-medium mb-2">Nombre <span class="text-red-500">*</span></label>
-              <input pInputText id="nombre" formControlName="nombre" class="w-full" placeholder="Ej: Juan">
+              <input pInputText id="nombre" formControlName="nombre" class="w-full" placeholder="Ej: Juan" [disabled]="!canEditBecado">
               @if (submitted && becadoForm.get('nombre')?.invalid) {
                 <small class="p-error block mt-1">El nombre es requerido</small>
               }
@@ -307,7 +315,7 @@
           <div class="col-12 md:col-8">
             <div class="field">
               <label for="carrera" class="block font-medium mb-2">Carrera <span class="text-red-500">*</span></label>
-              <input pInputText id="carrera" formControlName="carrera" class="w-full" placeholder="Ej: Ingeniería en Sistemas Computacionales">
+              <input pInputText id="carrera" formControlName="carrera" class="w-full" placeholder="Ej: Ingeniería en Sistemas Computacionales" [disabled]="!canEditBecado">
               @if (submitted && becadoForm.get('carrera')?.invalid) {
                 <small class="p-error block mt-1">La carrera es requerida</small>
               }
@@ -316,13 +324,22 @@
           <div class="col-12 md:col-4">
             <div class="field">
               <label for="estatus" class="block font-medium mb-2">Estatus</label>
-              <p-dropdown id="estatus" formControlName="estatus" [options]="estatusOptions" optionLabel="label" optionValue="value" placeholder="Selecciona estatus" styleClass="w-full" (onChange)="onEstatusChange($event.value)"></p-dropdown>
+              <p-dropdown 
+                id="estatus" formControlName="estatus" 
+                [options]="estatusOptions" optionLabel="label" optionValue="value" placeholder="Selecciona estatus" styleClass="w-full" 
+                [disabled]="!canChangeStatus"
+                (onChange)="onEstatusChange($event.value)">
+              </p-dropdown>
             </div>
           </div>
           <div class="col-12" *ngIf="becadoForm.get('estatus')?.value === false">
             <div class="field">
               <label for="tipo_inactivo" class="block font-medium mb-2">Tipo de Inactivo <span class="text-red-500">*</span></label>
-              <p-dropdown id="tipo_inactivo" formControlName="tipo_inactivo" [options]="tiposInactivo.slice(1)" optionLabel="label" optionValue="value" placeholder="Selecciona el tipo de baja" styleClass="w-full" [disabled]="becadoForm.get('estatus')?.value !== false"></p-dropdown>
+              <p-dropdown 
+                id="tipo_inactivo" formControlName="tipo_inactivo" 
+                [options]="tiposInactivo.slice(1)" optionLabel="label" optionValue="value" placeholder="Selecciona el tipo de baja" styleClass="w-full" 
+                [disabled]="!canChangeStatus">
+              </p-dropdown>
             </div>
           </div>
         </div>
@@ -334,13 +351,22 @@
           <div class="col-12 md:col-6">
             <div class="field">
               <label for="id_universidad" class="block font-medium mb-2">Universidad <span class="text-red-500">*</span></label>
-              <p-dropdown id="id_universidad" formControlName="id_universidad" [options]="universidades" optionLabel="nombre" optionValue="id_universidad" [filter]="true" placeholder="Selecciona una universidad" styleClass="w-full"></p-dropdown>
+              <p-dropdown 
+                id="id_universidad" formControlName="id_universidad" 
+                [options]="universidades" optionLabel="nombre" optionValue="id_universidad"
+                [disabled]="!canEditBecado" 
+                [filter]="true" placeholder="Selecciona una universidad" styleClass="w-full">
+              </p-dropdown>
             </div>
           </div>
           <div class="col-12 md:col-6">
             <div class="field">
               <label for="id_modalidad" class="block font-medium mb-2">Modalidad <span class="text-red-500">*</span></label>
-              <p-dropdown id="id_modalidad" formControlName="id_modalidad" [options]="modalidades" optionLabel="tipo" optionValue="id_modalidad" [filter]="true" placeholder="Selecciona una modalidad" styleClass="w-full"></p-dropdown>
+              <p-dropdown id="id_modalidad" formControlName="id_modalidad" 
+                [options]="modalidades" optionLabel="tipo" optionValue="id_modalidad" 
+                [filter]="true" placeholder="Selecciona una modalidad" styleClass="w-full"
+                [disabled]="!canEditBecado">
+              </p-dropdown>
             </div>
           </div>
         </div>
@@ -352,7 +378,10 @@
           <div class="col-12 md:col-4">
             <div class="field">
               <label for="monto_autorizado" class="block font-medium mb-2">Monto Autorizado <span class="text-red-500">*</span></label>
-              <p-inputNumber id="monto_autorizado" formControlName="monto_autorizado" mode="currency" currency="MXN" locale="es-MX" class="w-full" (onInput)="calcularTotales()"></p-inputNumber>
+              <p-inputNumber id="monto_autorizado" formControlName="monto_autorizado" mode="currency" currency="MXN" locale="es-MX" class="w-full" 
+                (onInput)="calcularTotales()"
+                [disabled]="!canEditBecado">
+              </p-inputNumber>
             </div>
           </div>
           <div class="col-12 md:col-4">
@@ -373,40 +402,42 @@
           </div>
         </div>
 
-        <p-divider align="left">
-          <span class="font-medium">Pagos Realizados</span>
-        </p-divider>
+        <ng-container *ngIf="canManagePayments">
+          <p-divider align="left">
+            <span class="font-medium">Pagos Realizados</span>
+          </p-divider>
 
-        <div class="pagos-container">
-          <div *ngFor="let pago of pagos; let i = index" class="pago-item">
-            <div class="grid align-items-center">
-              <div class="col-12 md:col-5">
-                <input pInputText [(ngModel)]="pago.concepto" [ngModelOptions]="{standalone: true}" placeholder="Concepto del pago" class="w-full">
+          <div class="pagos-container">
+            <div *ngFor="let pago of pagos; let i = index" class="pago-item">
+              <div class="grid align-items-center">
+                <div class="col-12 md:col-5">
+                  <input pInputText [(ngModel)]="pago.concepto" [ngModelOptions]="{standalone: true}" placeholder="Concepto del pago" class="w-full">
+                </div>
+                <div class="col-12 md:col-5">
+                  <p-inputNumber [(ngModel)]="pago.monto" [ngModelOptions]="{standalone: true}" mode="currency" currency="MXN" locale="es-MX" class="w-full" (onInput)="calcularTotales()"></p-inputNumber>
+                </div>
+                <div class="col-12 md:col-2">
+                  <p-button icon="pi pi-trash" styleClass="p-button-rounded p-button-text p-button-danger" (onClick)="eliminarPago(i)"></p-button>
+                </div>
               </div>
-              <div class="col-12 md:col-5">
-                <p-inputNumber [(ngModel)]="pago.monto" [ngModelOptions]="{standalone: true}" mode="currency" currency="MXN" locale="es-MX" class="w-full" (onInput)="calcularTotales()"></p-inputNumber>
+            </div>
+
+            <div class="mt-3">
+              <p-button label="Agregar Pago" icon="pi pi-plus" styleClass="p-button-outlined p-button-sm" (onClick)="agregarPago()"></p-button>
+            </div>
+
+            <div class="bg-blue-50 p-3 border-round mt-3">
+              <div class="flex justify-content-between">
+                <span class="font-medium">Número de pagos registrados:</span>
+                <span class="font-bold">{{ pagos.length }}</span>
               </div>
-              <div class="col-12 md:col-2">
-                <p-button icon="pi pi-trash" styleClass="p-button-rounded p-button-text p-button-danger" (onClick)="eliminarPago(i)"></p-button>
+              <div class="flex justify-content-between mt-2">
+                <span class="font-medium">Suma total de pagos (Erogado):</span>
+                <span class="font-bold text-green-700">{{ formatCurrency(calcularSumaPagos()) }}</span>
               </div>
             </div>
           </div>
-
-          <div class="mt-3">
-            <p-button label="Agregar Pago" icon="pi pi-plus" styleClass="p-button-outlined p-button-sm" (onClick)="agregarPago()"></p-button>
-          </div>
-
-          <div class="bg-blue-50 p-3 border-round mt-3">
-            <div class="flex justify-content-between">
-              <span class="font-medium">Número de pagos registrados:</span>
-              <span class="font-bold">{{ pagos.length }}</span>
-            </div>
-            <div class="flex justify-content-between mt-2">
-              <span class="font-medium">Suma total de pagos (Erogado):</span>
-              <span class="font-bold text-green-700">{{ formatCurrency(calcularSumaPagos()) }}</span>
-            </div>
-          </div>
-        </div>
+        </ng-container>
       </p-fieldset>
 
       <div class="flex justify-content-end gap-2 mt-3">

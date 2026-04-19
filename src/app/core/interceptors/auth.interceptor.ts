@@ -4,11 +4,8 @@ import { Router } from '@angular/router';
 import { catchError, throwError } from 'rxjs';
 
 export const authInterceptor: HttpInterceptorFn = (req, next) => {
-  console.log('✅ Interceptor funcionando - URL:', req.url);
-  
   const token = localStorage.getItem('auth_token');
   
-  // Headers base
   let headers: any = {
     'ngrok-skip-browser-warning': 'true',
     'Content-Type': 'application/json',
@@ -17,10 +14,8 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
   
   if (token) {
     headers['Authorization'] = `Bearer ${token}`;
-    console.log('🔑 Token añadido');
   }
   
-  // Clonar request con headers
   const authReq = req.clone({
     setHeaders: headers
   });

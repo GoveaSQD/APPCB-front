@@ -1,1 +1,155 @@
-<p>usuarios works!</p>
+<div class="p-4">
+  <div class="flex justify-content-between align-items-center mb-4">
+    <h1 class="text-3xl font-bold">Gestión de Usuarios</h1>
+    <p-button 
+      label="Nuevo Usuario" 
+      icon="pi pi-user-plus" 
+      (onClick)="openDialog(false)">
+    </p-button>
+  </div>
+
+  <p-card>
+    <p-table 
+      [value]="usuarios" 
+      [loading]="loading"
+      [paginator]="true"
+      [rows]="10"
+      [rowsPerPageOptions]="[5, 10, 25]"
+      styleClass="p-datatable-sm">
+      
+      <ng-template pTemplate="header">
+        <tr>
+          <th>ID</th>
+          <th>Nombre</th>
+          <th>Email</th>
+          <th>Rol</th>
+          <th>Estado</th>
+          <th>Fecha Creación</th>
+          <th>Acciones</th>
+        </tr>
+      </ng-template>
+      
+      <ng-template pTemplate="body" let-usuario>
+        <tr>
+          <td>{{ usuario.id_usuario }}</td>
+          <td>{{ usuario.nombre }} {{ usuario.ap_paterno }} {{ usuario.ap_materno }}</td>
+          <td>{{ usuario.email }}</td>
+          <td>
+            <p-tag 
+              [value]="getRolLabel(usuario.tipo_usuario || 2)" 
+              [severity]="getRolSeverity(usuario.tipo_usuario || 2)">
+            </p-tag>
+          </td>
+          <td>
+            <p-tag 
+              [value]="usuario.activo ? 'Activo' : 'Inactivo'" 
+              [severity]="usuario.activo ? 'success' : 'danger'">
+            </p-tag>
+          </td>
+          <td>{{ usuario.fechaCreacion | date:'dd/MM/yyyy' }}</td>
+          <td>
+            <div class="flex gap-2">
+              <p-button 
+                icon="pi pi-pencil" 
+                severity="info" 
+                size="small" 
+                (onClick)="openDialog(true, usuario)">
+              </p-button>
+              <p-button 
+                icon="pi pi-trash" 
+                severity="danger" 
+                size="small" 
+                (onClick)="confirmDelete(usuario)">
+              </p-button>
+            </div>
+          </td>
+        </tr>
+      </ng-template>
+      
+      <ng-template pTemplate="emptymessage">
+        <tr>
+          <td colspan="7" class="text-center">No hay usuarios registrados</td>
+        </tr>
+      </ng-template>
+    </p-table>
+  </p-card>
+</div>
+
+<!-- Diálogo para crear/editar usuario -->
+<p-dialog 
+  [(visible)]="dialogVisible" 
+  [header]="isEditing ? 'Editar Usuario' : 'Nuevo Usuario'"
+  [modal]="true"
+  [style]="{ width: '500px' }"
+  [draggable]="false">
+  
+  <form [formGroup]="usuarioForm" (ngSubmit)="saveUsuario()">
+    <div class="flex flex-column gap-3">
+      <div class="grid">
+        <div class="col-12 md:col-6">
+          <label class="font-semibold">Nombre *</label>
+          <input pInputText formControlName="nombre" class="w-full" />
+          <small class="p-error" *ngIf="usuarioForm.get('nombre')?.invalid && usuarioForm.get('nombre')?.touched">
+            Requerido
+          </small>
+        </div>
+        <div class="col-12 md:col-6">
+          <label>Apellido Paterno</label>
+          <input pInputText formControlName="ap_paterno" class="w-full" />
+        </div>
+      </div>
+
+      <div>
+        <label>Apellido Materno</label>
+        <input pInputText formControlName="ap_materno" class="w-full" />
+      </div>
+
+      <div>
+        <label class="font-semibold">Email *</label>
+        <input pInputText formControlName="email" type="email" class="w-full" />
+        <small class="p-error" *ngIf="usuarioForm.get('email')?.invalid && usuarioForm.get('email')?.touched">
+          Email válido requerido
+        </small>
+      </div>
+
+      <div *ngIf="!isEditing">
+        <label class="font-semibold">Contraseña *</label>
+        <p-password formControlName="password" [feedback]="true" class="w-full" />
+        <small class="p-error" *ngIf="usuarioForm.get('password')?.invalid && usuarioForm.get('password')?.touched">
+          Mínimo 6 caracteres
+        </small>
+      </div>
+
+      <div>
+        <label class="font-semibold">Rol *</label>
+        <p-dropdown 
+          formControlName="tipo_usuario"
+          [options]="rolesOptions"
+          optionLabel="label"
+          optionValue="value"
+          placeholder="Seleccione un rol"
+          class="w-full">
+        </p-dropdown>
+      </div>
+
+      <div>
+        <label>Estado</label>
+        <p-inputSwitch formControlName="activo" class="ml-2"></p-inputSwitch>
+      </div>
+    </div>
+
+    <div class="flex justify-content-end gap-2 mt-4">
+      <p-button 
+        label="Cancelar" 
+        severity="secondary" 
+        (onClick)="dialogVisible = false">
+      </p-button>
+      <p-button 
+        label="Guardar" 
+        type="submit" 
+        [loading]="saving" 
+        [disabled]="usuarioForm.invalid">
+      </p-button>
+    </div>
+  </form>
+</p-dialog>

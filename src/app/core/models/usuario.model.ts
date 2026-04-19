@@ -4,8 +4,8 @@ export interface Usuario {
   ap_paterno?: string;
   ap_materno?: string;
   email: string;
-  password?: string;  // Solo para creación/actualización
-  rol?: 'admin' | 'usuario';
+  password?: string;
+  tipo_usuario?: 1 | 2 | 3;
   fechaCreacion?: Date;
   activo?: boolean;
 }
@@ -19,7 +19,7 @@ export interface RegisterRequest {
   nombre: string;
   email: string;
   password: string;
-  rol?: string;  // Opcional, por defecto 'usuario'
+  tipo_usuario?: 1 | 2 | 3;  // Opcional, por defecto 'usuario'
 }
 
 export interface LoginResponse {

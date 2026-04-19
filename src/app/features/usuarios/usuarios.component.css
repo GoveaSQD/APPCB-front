@@ -1,0 +1,11 @@
+:host ::ng-deep .p-datatable .p-datatable-header {
+  background: transparent;
+}
+
+:host ::ng-deep .p-button.p-button-sm {
+  padding: 0.5rem;
+}
+
+.flex.gap-2 {
+  gap: 0.5rem;
+}

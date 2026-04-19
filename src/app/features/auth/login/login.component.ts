@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
-import { Router, RouterLink } from '@angular/router';
+import { Router } from '@angular/router';
 
 // PrimeNG Components
 import { InputTextModule } from 'primeng/inputtext';
@@ -28,7 +28,6 @@ import { LoginRequest, AuthResponse } from '../../../core/models/usuario.model';
   imports: [
     CommonModule,
     ReactiveFormsModule,
-    RouterLink,
     InputTextModule,
     PasswordModule,
     ButtonModule,

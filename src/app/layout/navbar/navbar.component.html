@@ -1,6 +1,5 @@
 <div class="fixed top-0 left-0 w-full z-5">
   <p-menubar [model]="items" styleClass="border-noround shadow-2 px-4">
-    <!-- Logo a la izquierda -->
     <ng-template pTemplate="start">
       <div class="flex align-items-center mr-3">
         <div class="bg-primary border-circle flex align-items-center justify-content-center mr-2" style="width: 40px; height: 40px;">
@@ -10,13 +9,12 @@
       </div>
     </ng-template>
 
-    <!-- Usuario a la derecha -->
     <ng-template pTemplate="end">
       <div class="flex align-items-center gap-3">
         <span class="text-sm hidden md:block text-600">
           {{ usuario?.nombre }}
-          <span class="text-xs bg-primary-100 text-primary-700 px-2 py-1 border-round ml-2">
-            {{ usuario?.rol === 'admin' ? 'Admin' : 'Usuario' }}
+          <span class="text-xs px-2 py-1 border-round ml-2" [class]="getRolClass()">
+            {{ getRolLabel() }}
           </span>
         </span>
         <p-avatar 
@@ -33,5 +31,4 @@
   </p-menubar>
 </div>
 
-<!-- Espaciador para que el contenido no quede debajo del navbar -->
 <div class="mt-7"></div>

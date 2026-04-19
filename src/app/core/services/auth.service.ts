@@ -31,7 +31,7 @@ export class AuthService {
     );
   }
 
-  register(userData: RegisterRequest): Observable<AuthResponse> {
+  registerUser(userData: RegisterRequest): Observable<AuthResponse> {
     return this.http.post<LoginResponse>(`${this.apiUrl}/register`, userData).pipe(
       map(response => ({
         success: response.success,
@@ -39,11 +39,6 @@ export class AuthService {
         token: response.data.token,
         usuario: response.data.user
       })),
-      tap(response => {
-        if (response.success && response.token) {
-          this.setSession(response);
-        }
-      }),
       catchError(this.handleError)
     );
   }
@@ -82,9 +77,42 @@ export class AuthService {
     return !!this.getToken();
   }
 
-  isAdmin(): boolean {
+  getRolString(): string | null {
     const user = this.getUser();
-    return user?.rol === 'admin';
+    if (!user || !user.tipo_usuario) return null;
+    const roles: Record<number, string> = {
+      1: 'admin',
+      2: 'registro',
+      3: 'pagos'
+    };
+    return roles[user.tipo_usuario];
+  }
+
+  isAdmin(): boolean {
+    return this.getRolString() === 'admin';
+  }
+
+  isRegistro(): boolean {
+    return this.getRolString() === 'registro';
+  }
+
+  isPagos(): boolean {
+    return this.getRolString() === 'pagos';
+  }
+
+  hasAccess(module: 'usuarios' | 'becados' | 'pagos' | 'universidades' | 'modalidades'): boolean {
+    const rol = this.getRolString();
+    if (!rol) return false;
+    
+    const accessMap = {
+      usuarios: rol === 'admin',
+      becados: rol === 'admin' || rol === 'registro',
+      pagos: rol === 'admin' || rol === 'pagos',
+      universidades: rol === 'admin' || rol === 'registro',
+      modalidades: rol === 'admin' || rol === 'registro'
+    };
+    
+    return accessMap[module];
   }
 
   private handleError(error: any) {

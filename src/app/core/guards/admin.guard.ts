@@ -15,7 +15,6 @@ export class AdminGuard implements CanActivate {
     if (this.authService.isAdmin()) {
       return true;
     }
-    
     return this.router.createUrlTree(['/dashboard']);
   }
 }
