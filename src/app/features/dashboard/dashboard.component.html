@@ -26,13 +26,22 @@
         </ng-template>
       </p-dropdown>
       
-      <!-- Botón exportar -->
+      <!-- Botón Exportar Excel -->
       <p-button 
-        label="Exportar" 
+        label="Excel" 
+        icon="pi pi-file-excel" 
+        styleClass="p-button-success p-button-outlined"
+        (onClick)="exportarReporteExcel()"
+        [loading]="exportando">
+      </p-button>
+      
+      <!-- Botón Exportar PDF -->
+      <p-button 
+        label="PDF" 
         icon="pi pi-file-pdf" 
         styleClass="p-button-danger p-button-outlined"
-        (onClick)="exportarReporte()"
-        [loading]="exportando"> Reporte Financiero
+        (onClick)="exportarReportePDF()"
+        [loading]="exportando">
       </p-button>
       
       <p-button 

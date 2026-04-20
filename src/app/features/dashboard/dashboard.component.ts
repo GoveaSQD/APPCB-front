@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { FormsModule } from '@angular/forms';
+import { ReporteService, ReporteData } from '../../core/services/reporte.service';
 
 // PrimeNG Modules
 import { CardModule } from 'primeng/card';
@@ -79,7 +80,8 @@ export class DashboardComponent implements OnInit {
     private becadoService: BecadoService,
     private universidadService: UniversidadService,
     private modalidadService: ModalidadService,
-    private messageService: MessageService
+    private messageService: MessageService,
+    private reporteService: ReporteService
   ) {
     this.usuario = this.authService.getUser();
     this.generarAniosDisponibles();
@@ -244,70 +246,90 @@ calcularEstadisticasPorAnio(anio: number): void {
     }, 100);
   }
 
-  async exportarReporte(): Promise<void> {
-    this.exportando = true;
+async exportarReporteExcel(): Promise<void> {
+  this.exportando = true;
+  
+  try {
+    const reporteData: ReporteData = {
+      stats: {
+        bolsaTotal: this.stats.bolsaTotal,
+        erogadoTotal: this.stats.erogadoTotal,
+        pendienteTotal: this.stats.pendienteTotal,
+        perdidoInactivos: this.stats.perdidoInactivos,
+        totalBecados: this.stats.totalBecados,
+        totalUniversidades: this.stats.totalUniversidades,
+        totalModalidades: this.stats.totalModalidades,
+        becadosActivos: this.stats.becadosActivos,
+        becadosInactivos: this.stats.becadosInactivos,
+        porcentajeErogado: this.getPorcentajeErogado()
+      },
+      anio: this.anioSeleccionado,
+      fechaGeneracion: new Date(),
+      becados: this.datosOriginales?.becados || []
+    };
     
-    try {
-      // Crear contenido del reporte
-      const fecha = new Date();
-      const contenido = `
-========================================
-      REPORTE DE DASHBOARD
-      Sistema de Becas
-      Fecha: ${fecha.toLocaleString()}
-      Año filtrado: ${this.anioSeleccionado}
-========================================
-
-RESUMEN FINANCIERO
-----------------------------------------
-Bolsa Total: ${this.formatCurrency(this.stats.bolsaTotal)}
-Dinero Erogado: ${this.formatCurrency(this.stats.erogadoTotal)}
-Faltante Total: ${this.formatCurrency(this.stats.pendienteTotal)}
-Perdido (Inactivos): ${this.formatCurrency(this.stats.perdidoInactivos)}
-Progreso de Erogado: ${this.getPorcentajeErogado().toFixed(2)}%
-
-RESUMEN DE BECADOS
-----------------------------------------
-Total Becados: ${this.stats.totalBecados}
-  - Activos: ${this.stats.becadosActivos}
-  - Inactivos: ${this.stats.becadosInactivos}
-Total Universidades: ${this.stats.totalUniversidades}
-Total Modalidades: ${this.stats.totalModalidades}
-
-========================================
-      Fin del Reporte
-========================================
-      `;
-      
-      // Crear blob y descargar
-      const blob = new Blob([contenido], { type: 'text/plain' });
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `reporte_dashboard_${fecha.getFullYear()}-${fecha.getMonth() + 1}-${fecha.getDate()}.txt`;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      window.URL.revokeObjectURL(url);
-      
-      this.messageService.add({
-        severity: 'success',
-        summary: 'Éxito',
-        detail: 'Reporte exportado correctamente',
-        life: 3000
-      });
-    } catch (error) {
-      console.error('Error al exportar:', error);
-      this.messageService.add({
-        severity: 'error',
-        summary: 'Error',
-        detail: 'No se pudo exportar el reporte',
-        life: 5000
-      });
-    } finally {
-      this.exportando = false;
-    }
+    await this.reporteService.exportToExcel(reporteData);
+    
+    this.messageService.add({
+      severity: 'success',
+      summary: 'Éxito',
+      detail: 'Reporte Excel generado correctamente',
+      life: 3000
+    });
+  } catch (error) {
+    console.error('Error al exportar Excel:', error);
+    this.messageService.add({
+      severity: 'error',
+      summary: 'Error',
+      detail: 'No se pudo generar el reporte Excel',
+      life: 5000
+    });
+  } finally {
+    this.exportando = false;
   }
+}
+
+async exportarReportePDF(): Promise<void> {
+  this.exportando = true;
+  
+  try {
+    const reporteData: ReporteData = {
+      stats: {
+        bolsaTotal: this.stats.bolsaTotal,
+        erogadoTotal: this.stats.erogadoTotal,
+        pendienteTotal: this.stats.pendienteTotal,
+        perdidoInactivos: this.stats.perdidoInactivos,
+        totalBecados: this.stats.totalBecados,
+        totalUniversidades: this.stats.totalUniversidades,
+        totalModalidades: this.stats.totalModalidades,
+        becadosActivos: this.stats.becadosActivos,
+        becadosInactivos: this.stats.becadosInactivos,
+        porcentajeErogado: this.getPorcentajeErogado()
+      },
+      anio: this.anioSeleccionado,
+      fechaGeneracion: new Date()
+    };
+    
+    await this.reporteService.exportToPDF(reporteData);
+    
+    this.messageService.add({
+      severity: 'success',
+      summary: 'Éxito',
+      detail: 'Reporte PDF generado correctamente',
+      life: 3000
+    });
+  } catch (error) {
+    console.error('Error al exportar PDF:', error);
+    this.messageService.add({
+      severity: 'error',
+      summary: 'Error',
+      detail: 'No se pudo generar el reporte PDF',
+      life: 5000
+    });
+  } finally {
+    this.exportando = false;
+  }
+}
 
   refrescar(): void {
     this.cargarDashboard();
