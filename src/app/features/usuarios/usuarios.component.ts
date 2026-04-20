@@ -13,7 +13,6 @@ import { ToastModule } from 'primeng/toast';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { ConfirmationService, MessageService } from 'primeng/api';
 import { PasswordModule } from 'primeng/password';
-import { InputSwitchModule } from 'primeng/inputswitch';
 import { TagModule } from 'primeng/tag';
 
 // Services & Models
@@ -23,7 +22,7 @@ import { Usuario } from '../../core/models/usuario.model';
 
 interface RolOption {
   label: string;
-  value: number;
+  value: number; // 1, 2, 3
 }
 
 @Component({
@@ -41,7 +40,6 @@ interface RolOption {
     ToastModule,
     ConfirmDialogModule,
     PasswordModule,
-    InputSwitchModule,
     TagModule
   ],
   providers: [ConfirmationService, MessageService],
@@ -76,8 +74,7 @@ export class UsuariosComponent implements OnInit {
       ap_materno: [''],
       email: ['', [Validators.required, Validators.email]],
       password: ['', [Validators.required, Validators.minLength(6)]],
-      tipo_usuario: [2, Validators.required],
-      activo: [true]
+      tipo_usuario: [2, Validators.required]
     });
   }
 
@@ -95,6 +92,7 @@ export class UsuariosComponent implements OnInit {
         this.loading = false;
       },
       error: (error) => {
+        console.error('Error al cargar usuarios:', error);
         this.messageService.add({
           severity: 'error',
           summary: 'Error',
@@ -105,133 +103,145 @@ export class UsuariosComponent implements OnInit {
     });
   }
 
-openDialog(edit: boolean, usuario?: Usuario): void {
-  this.isEditing = edit;
-  this.dialogVisible = true;
-  
-  if (edit && usuario) {
-    this.selectedUsuario = usuario;
-    // Convertir cualquier valor a booleano (true si existe y es truthy)
-    const activoBoolean = !!usuario.activo;
+  openDialog(edit: boolean, usuario?: Usuario): void {
+    this.isEditing = edit;
+    this.dialogVisible = true;
     
-    this.usuarioForm.patchValue({
-      nombre: usuario.nombre,
-      ap_paterno: usuario.ap_paterno || '',
-      ap_materno: usuario.ap_materno || '',
-      email: usuario.email,
-      tipo_usuario: usuario.tipo_usuario || 2,
-      activo: activoBoolean
-    });
-    this.usuarioForm.get('password')?.clearValidators();
-    this.usuarioForm.get('password')?.updateValueAndValidity();
-  } else {
-    this.selectedUsuario = null;
-    this.usuarioForm.reset({
-      nombre: '',
-      ap_paterno: '',
-      ap_materno: '',
-      email: '',
-      password: '',
-      tipo_usuario: 2,
-      activo: true
-    });
-    this.usuarioForm.get('password')?.setValidators([Validators.required, Validators.minLength(6)]);
-    this.usuarioForm.get('password')?.updateValueAndValidity();
-  }
-}
-
-saveUsuario(): void {
-  if (this.usuarioForm.invalid) {
-    this.usuarioForm.markAllAsTouched();
-    return;
-  }
-
-  this.saving = true;
-  const formData = this.usuarioForm.value;
-
-  // Convertir datos al formato que espera el backend
-  const dataToSend: any = {
-    nombre: formData.nombre,
-    ap_paterno: formData.ap_paterno || null,
-    ap_materno: formData.ap_materno || null,
-    email: formData.email,
-    tipo_usuario: Number(formData.tipo_usuario),
-    activo: formData.activo ? 1 : 0  // Si es true -> 1, false -> 0
-  };
-
-  // Solo incluir password si existe
-  if (formData.password && formData.password.trim() !== '') {
-    dataToSend.password = formData.password;
-  }
-
-  console.log('Datos a enviar:', dataToSend);
-
-  if (this.isEditing && this.selectedUsuario) {
-    this.usuarioService.update(this.selectedUsuario.id_usuario!, dataToSend).subscribe({
-      next: (response) => {
-        if (response.success) {
-          this.messageService.add({
-            severity: 'success',
-            summary: 'Éxito',
-            detail: 'Usuario actualizado correctamente'
-          });
-          this.dialogVisible = false;
-          this.loadUsuarios();
-        }
-        this.saving = false;
-      },
-      error: (error) => {
-        console.error('Error al actualizar:', error);
-        this.messageService.add({
-          severity: 'error',
-          summary: 'Error',
-          detail: error.error?.message || 'Error al actualizar usuario'
-        });
-        this.saving = false;
-      }
-    });
-  } else {
-    if (!dataToSend.password) {
-      this.messageService.add({
-        severity: 'error',
-        summary: 'Error',
-        detail: 'La contraseña es requerida para nuevos usuarios'
+    if (edit && usuario) {
+      this.selectedUsuario = usuario;
+      
+      this.usuarioForm.patchValue({
+        nombre: usuario.nombre,
+        ap_paterno: usuario.ap_paterno || '',
+        ap_materno: usuario.ap_materno || '',
+        email: usuario.email,
+        tipo_usuario: usuario.tipo_usuario || 2
       });
-      this.saving = false;
+      
+      this.usuarioForm.get('password')?.clearValidators();
+      this.usuarioForm.get('password')?.updateValueAndValidity();
+    } else {
+      this.selectedUsuario = null;
+      this.usuarioForm.reset({
+        nombre: '',
+        ap_paterno: '',
+        ap_materno: '',
+        email: '',
+        password: '',
+        tipo_usuario: 2
+      });
+      this.usuarioForm.get('password')?.setValidators([Validators.required, Validators.minLength(6)]);
+      this.usuarioForm.get('password')?.updateValueAndValidity();
+    }
+  }
+
+  saveUsuario(): void {
+    if (this.usuarioForm.invalid) {
+      this.usuarioForm.markAllAsTouched();
       return;
     }
-    
-    this.authService.registerUser(dataToSend).subscribe({
-      next: (response) => {
-        if (response.success) {
+
+    this.saving = true;
+    const formData = this.usuarioForm.value;
+
+    const dataToSend: any = {
+      nombre: formData.nombre.trim(),
+      ap_paterno: formData.ap_paterno ? formData.ap_paterno.trim() : null,
+      ap_materno: formData.ap_materno ? formData.ap_materno.trim() : null,
+      email: formData.email.trim().toLowerCase(),
+      tipo_usuario: Number(formData.tipo_usuario) // FORZAR como número: 1, 2 o 3
+    };
+
+    if (formData.password && formData.password.trim() !== '') {
+      dataToSend.password = formData.password;
+    }
+
+    console.log('Enviando al backend:', JSON.stringify(dataToSend, null, 2));
+
+    if (this.isEditing && this.selectedUsuario) {
+      // ACTUALIZAR usuario existente
+      this.usuarioService.update(this.selectedUsuario.id_usuario!, dataToSend).subscribe({
+        next: (response) => {
+          console.log('Respuesta update:', response);
+          if (response.success) {
+            this.messageService.add({
+              severity: 'success',
+              summary: 'Éxito',
+              detail: 'Usuario actualizado correctamente'
+            });
+            this.dialogVisible = false;
+            this.loadUsuarios();
+          } else {
+            this.messageService.add({
+              severity: 'error',
+              summary: 'Error',
+              detail: response.message || 'Error al actualizar usuario'
+            });
+          }
+          this.saving = false;
+        },
+        error: (error) => {
+          console.error('Error HTTP al actualizar:', error);
           this.messageService.add({
-            severity: 'success',
-            summary: 'Éxito',
-            detail: 'Usuario creado correctamente'
+            severity: 'error',
+            summary: 'Error',
+            detail: error.error?.message || error.message || 'Error al actualizar usuario'
           });
-          this.dialogVisible = false;
-          this.loadUsuarios();
+          this.saving = false;
         }
-        this.saving = false;
-      },
-      error: (error) => {
-        console.error('Error al crear:', error);
+      });
+    } else {
+      // CREAR nuevo usuario
+      if (!dataToSend.password) {
         this.messageService.add({
           severity: 'error',
           summary: 'Error',
-          detail: error.error?.message || 'Error al crear usuario'
+          detail: 'La contraseña es requerida para nuevos usuarios'
         });
         this.saving = false;
+        return;
       }
-    });
+      
+      this.authService.registerUser(dataToSend).subscribe({
+        next: (response) => {
+          console.log('Respuesta create:', response);
+          if (response.success) {
+            this.messageService.add({
+              severity: 'success',
+              summary: 'Éxito',
+              detail: 'Usuario creado correctamente'
+            });
+            this.dialogVisible = false;
+            this.loadUsuarios(); // Recargar lista
+          } else {
+            this.messageService.add({
+              severity: 'error',
+              summary: 'Error',
+              detail: response.message || 'Error al crear usuario'
+            });
+          }
+          this.saving = false;
+        },
+        error: (error) => {
+          console.error('Error HTTP al crear:', error);
+          this.messageService.add({
+            severity: 'error',
+            summary: 'Error',
+            detail: error.error?.message || error.message || 'Error al crear usuario'
+          });
+          this.saving = false;
+        }
+      });
+    }
   }
-}
 
   confirmDelete(usuario: Usuario): void {
     this.confirmationService.confirm({
-      message: `¿Está seguro de eliminar al usuario ${usuario.nombre}?`,
+      message: `¿Está seguro de eliminar al usuario "${usuario.nombre} ${usuario.ap_paterno || ''}"?`,
       header: 'Confirmar Eliminación',
       icon: 'pi pi-exclamation-triangle',
+      acceptLabel: 'Sí, eliminar',
+      rejectLabel: 'Cancelar',
       accept: () => {
         this.usuarioService.delete(usuario.id_usuario!).subscribe({
           next: (response) => {
@@ -241,10 +251,17 @@ saveUsuario(): void {
                 summary: 'Eliminado',
                 detail: 'Usuario eliminado correctamente'
               });
-              this.loadUsuarios();
+              this.loadUsuarios(); // Recargar lista
+            } else {
+              this.messageService.add({
+                severity: 'error',
+                summary: 'Error',
+                detail: response.message || 'Error al eliminar usuario'
+              });
             }
           },
           error: (error) => {
+            console.error('Error al eliminar:', error);
             this.messageService.add({
               severity: 'error',
               summary: 'Error',
@@ -267,9 +284,9 @@ saveUsuario(): void {
 
   getRolSeverity(tipo_usuario: number): string {
     const severities: Record<number, string> = {
-      1: 'danger',
-      2: 'info',
-      3: 'warning'
+      1: 'danger',    // Admin - rojo
+      2: 'info',      // Registro - azul
+      3: 'warning'    // Pagos - naranja
     };
     return severities[tipo_usuario] || 'secondary';
   }

@@ -23,8 +23,6 @@
           <th>Nombre</th>
           <th>Email</th>
           <th>Rol</th>
-          <th>Estado</th>
-          <th>Fecha Creación</th>
           <th>Acciones</th>
         </tr>
       </ng-template>
@@ -32,21 +30,14 @@
       <ng-template pTemplate="body" let-usuario>
         <tr>
           <td>{{ usuario.id_usuario }}</td>
-          <td>{{ usuario.nombre }} {{ usuario.ap_paterno }} {{ usuario.ap_materno }}</td>
+          <td>{{ usuario.nombre }} {{ usuario.ap_paterno || '' }} {{ usuario.ap_materno || '' }}</td>
           <td>{{ usuario.email }}</td>
           <td>
             <p-tag 
-              [value]="getRolLabel(usuario.tipo_usuario || 2)" 
-              [severity]="getRolSeverity(usuario.tipo_usuario || 2)">
+              [value]="getRolLabel(usuario.tipo_usuario)" 
+              [severity]="getRolSeverity(usuario.tipo_usuario)">
             </p-tag>
           </td>
-          <td>
-            <p-tag 
-              [value]="usuario.activo ? 'Activo' : 'Inactivo'" 
-              [severity]="usuario.activo ? 'success' : 'danger'">
-            </p-tag>
-          </td>
-          <td>{{ usuario.fechaCreacion | date:'dd/MM/yyyy' }}</td>
           <td>
             <div class="flex gap-2">
               <p-button 
@@ -68,7 +59,7 @@
       
       <ng-template pTemplate="emptymessage">
         <tr>
-          <td colspan="7" class="text-center">No hay usuarios registrados</td>
+          <td colspan="5" class="text-center">No hay usuarios registrados</td>
         </tr>
       </ng-template>
     </p-table>
@@ -80,7 +71,7 @@
   [(visible)]="dialogVisible" 
   [header]="isEditing ? 'Editar Usuario' : 'Nuevo Usuario'"
   [modal]="true"
-  [style]="{ width: '500px' }"
+  [style]="{ width: '500px', height: '500px'}"
   [draggable]="false">
   
   <form [formGroup]="usuarioForm" (ngSubmit)="saveUsuario()">
@@ -130,11 +121,6 @@
           placeholder="Seleccione un rol"
           class="w-full">
         </p-dropdown>
-      </div>
-
-      <div>
-        <label>Estado</label>
-        <p-inputSwitch formControlName="activo" class="ml-2"></p-inputSwitch>
       </div>
     </div>
 

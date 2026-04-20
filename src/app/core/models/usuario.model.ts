@@ -6,8 +6,6 @@ export interface Usuario {
   email: string;
   password?: string;
   tipo_usuario?: 1 | 2 | 3;
-  fechaCreacion?: Date;
-  activo?: boolean;
 }
 
 export interface LoginRequest {
@@ -19,7 +17,7 @@ export interface RegisterRequest {
   nombre: string;
   email: string;
   password: string;
-  tipo_usuario?: 1 | 2 | 3;  // Opcional, por defecto 'usuario'
+  tipo_usuario?: 1 | 2 | 3;
 }
 
 export interface LoginResponse {
