@@ -96,15 +96,25 @@ private parseNumber(value: any): number {
   }
 
   // PUT /api/becados/:id - Actualizar
+ // En becado.service.ts - método update
   update(id: number, becado: Partial<Becado>): Observable<ApiResponse<Becado>> {
-    console.log('Service - Actualizando becado ID:', id);
-    console.log('Service - Datos a enviar:', JSON.stringify(becado, null, 2));
-    return this.http.put<ApiResponse<Becado>>(`${this.apiUrl}/${id}`, becado)
-      .pipe(
-        tap(response => console.log('Service - Respuesta update:', response)),
-        catchError(this.handleError)
-      );
-  }
+  console.log('Service - Actualizando becado ID:', id);
+  console.log('Service - Datos a enviar:', JSON.stringify(becado, null, 2));
+  
+  // Asegurar que no haya undefined en los datos
+  const cleanData: any = {};
+  Object.keys(becado).forEach(key => {
+    if (becado[key as keyof Partial<Becado>] !== undefined) {
+      cleanData[key] = becado[key as keyof Partial<Becado>];
+    }
+  });
+  
+  return this.http.put<ApiResponse<Becado>>(`${this.apiUrl}/${id}`, cleanData)
+    .pipe(
+      tap(response => console.log('Service - Respuesta update:', response)),
+      catchError(this.handleError)
+    );
+}
 
   // DELETE /api/becados/:id - Eliminar
   delete(id: number): Observable<ApiResponse<void>> {

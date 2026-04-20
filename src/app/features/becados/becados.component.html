@@ -10,7 +10,7 @@
         (onClick)="refrescar()">
       </p-button>
       <p-button 
-        *ngIf="canEditBecado"
+        *ngIf="isAdmin || isRegistro"
         label="Nuevo Becado" 
         icon="pi pi-user-plus" 
         styleClass="p-button-success"
@@ -162,16 +162,29 @@
             <td class="text-orange-600">{{ formatCurrency(becado.pendiente) }}</td>
             <td>
               <div class="flex gap-2">
-                <p-button *ngIf="canEditBecado" icon="pi pi-pencil" styleClass="p-button-rounded p-button-text p-button-warning p-button-sm" (click)="editBecado(becado); $event.stopPropagation()"></p-button>
-                <p-button 
-                  *ngIf="canManagePayments && !canEditBecado"
-                  icon="pi pi-credit-card" 
-                  styleClass="p-button-rounded p-button-text p-button-success p-button-sm" 
-                  pTooltip="Gestionar pagos"
-                  (click)="editBecado(becado); $event.stopPropagation()">
-                </p-button>
-                <p-button *ngIf="canEditBecado" icon="pi pi-trash" styleClass="p-button-rounded p-button-text p-button-danger p-button-sm" (click)="deleteBecado(becado); $event.stopPropagation()"></p-button>
-              </div>
+                <!-- Editar: Admin, Registro y Pagos -->
+              <p-button 
+                *ngIf="canEditAny"
+                icon="pi pi-pencil" 
+                styleClass="p-button-rounded p-button-text p-button-warning p-button-sm" 
+                (click)="editBecado(becado); $event.stopPropagation()">
+              </p-button>
+              
+              <!-- Eliminar: Solo Admin -->
+              <p-button 
+                *ngIf="isAdmin"
+                icon="pi pi-trash" 
+                styleClass="p-button-rounded p-button-text p-button-danger p-button-sm" 
+                (click)="deleteBecado(becado); $event.stopPropagation()">
+              </p-button>
+              
+              <!-- Ver detalles: Todos -->
+              <p-button 
+                icon="pi pi-eye" 
+                styleClass="p-button-rounded p-button-text p-button-info p-button-sm" 
+                (click)="verDetalle(becado.id_becado); $event.stopPropagation()">
+              </p-button>
+            </div>
             </td>
           </tr>
         </ng-template>
@@ -378,9 +391,14 @@
           <div class="col-12 md:col-4">
             <div class="field">
               <label for="monto_autorizado" class="block font-medium mb-2">Monto Autorizado <span class="text-red-500">*</span></label>
-              <p-inputNumber id="monto_autorizado" formControlName="monto_autorizado" mode="currency" currency="MXN" locale="es-MX" class="w-full" 
-                (onInput)="calcularTotales()"
-                [disabled]="!canEditBecado">
+              <p-inputNumber 
+                id="monto_autorizado" 
+                formControlName="monto_autorizado" 
+                mode="currency" 
+                currency="MXN" 
+                locale="es-MX" 
+                class="w-full" 
+                [disabled]="!canEditMontoAutorizado">
               </p-inputNumber>
             </div>
           </div>
@@ -388,7 +406,7 @@
             <div class="field">
               <label class="block font-medium mb-2">Erogado</label>
               <div class="bg-gray-100 p-3 border-round">
-                <span class="text-xl font-bold text-green-700">{{ formatCurrency(becadoForm.get('erogado')?.value || 0) }}</span>
+                <span class="text-xl font-bold text-green-700">{{ formatCurrency(becadoForm.get('erogado')?.value) }}</span>
               </div>
             </div>
           </div>
@@ -396,7 +414,7 @@
             <div class="field">
               <label class="block font-medium mb-2">Pendiente por Erogar</label>
               <div class="bg-gray-100 p-3 border-round">
-                <span class="text-xl font-bold text-orange-600">{{ formatCurrency(becadoForm.get('pendiente_erogar')?.value || 0) }}</span>
+                <span class="text-xl font-bold text-orange-600">{{ formatCurrency(becadoForm.get('pendiente_erogar')?.value) }}</span>
               </div>
             </div>
           </div>

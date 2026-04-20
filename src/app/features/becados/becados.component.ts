@@ -20,6 +20,7 @@ import { DividerModule } from 'primeng/divider';
 import { FieldsetModule } from 'primeng/fieldset';
 import { TabViewModule } from 'primeng/tabview';
 import { AccordionModule } from 'primeng/accordion';
+import { TooltipModule } from 'primeng/tooltip';
 import { MessageService } from 'primeng/api';
 import { ConfirmationService } from 'primeng/api';
 
@@ -84,7 +85,8 @@ export interface TablaInactivos {
     DividerModule,
     FieldsetModule,
     TabViewModule,
-    AccordionModule
+    AccordionModule,
+    TooltipModule
   ],
   providers: [MessageService, ConfirmationService],
   templateUrl: './becados.component.html',
@@ -99,11 +101,14 @@ export class BecadosComponent implements OnInit {
   isAdmin: boolean = false;
   isRegistro: boolean = false;
   isPagos: boolean = false;
-
+  
   canEditBecado: boolean = false;      // Editar datos personales
   canManagePayments: boolean = false;   // Editar pagos
   canChangeStatus: boolean = false;     // Cambiar estatus
-
+  canEditMontoAutorizado: boolean = false;
+  canEditBecadoData: boolean = false;  // Editar datos del becado (excepto pagos)
+  canEditAny: boolean = false;         // Permiso para mostrar botón de editar
+  canCreateBecado: boolean = false;
   seccionPagosHabilitada: boolean = true;
 
   
@@ -170,20 +175,42 @@ export class BecadosComponent implements OnInit {
     });
   }
 
-  ngOnInit(): void {
-    const rol = this.authService.getRolString();
-    this.isAdmin = rol === 'admin';
-    this.isRegistro = rol === 'registro';
-    this.isPagos = rol === 'pagos';
-    
-    this.canEditBecado = this.isAdmin || this.isRegistro;
-    
-    this.canManagePayments = this.isAdmin || this.isPagos;
-    
-    this.canChangeStatus = this.isAdmin || this.isRegistro;
-
-    this.inactivosPorTipo = [];
-  }
+ngOnInit(): void {
+  // Configurar permisos según el rol
+  const rol = this.authService.getRolString();
+  
+  this.isAdmin = rol === 'admin';
+  this.isRegistro = rol === 'registro';
+  this.isPagos = rol === 'pagos';
+  
+  // Admin: puede hacer todo
+  this.canCreateBecado = this.isAdmin || this.isRegistro;
+  this.canChangeStatus = this.isAdmin || this.isRegistro;
+  
+  // Monto autorizado: Solo Admin y Pagos (Registro NO)
+  this.canEditMontoAutorizado = this.isAdmin || this.isPagos;
+  
+  // Datos personales: Admin y Registro pueden (Pagos NO)
+  this.canEditBecadoData = this.isAdmin || this.isRegistro;
+  
+  // Gestión de pagos: Solo Admin y Pagos (Registro NO)
+  this.canManagePayments = this.isAdmin || this.isPagos;
+  
+  // Botón editar: Admin, Registro y Pagos pueden ver el lápiz
+  this.canEditAny = this.isAdmin || this.isRegistro || this.isPagos;
+  
+  console.log('Permisos configurados:', {
+    isAdmin: this.isAdmin,
+    isRegistro: this.isRegistro,
+    isPagos: this.isPagos,
+    canEditBecadoData: this.canEditBecadoData,
+    canEditMontoAutorizado: this.canEditMontoAutorizado,
+    canManagePayments: this.canManagePayments,
+    canEditAny: this.canEditAny
+  });
+  
+  this.inactivosPorTipo = [];
+}
 
   // ============== CARGA DE DATOS ==============
   cargarTodo(): void {
@@ -456,8 +483,8 @@ get inactivosFiltrados(): TablaInactivos[] {
 
   // ============== ACCIONES ==============
 openNew(): void {
-
-  if (!this.canEditBecado) {
+  // Cambiar la condición: Registro también puede crear
+  if (!this.isAdmin && !this.isRegistro) {
     this.messageService.add({
       severity: 'error',
       summary: 'Acceso denegado',
@@ -486,17 +513,34 @@ openNew(): void {
   // Deshabilitar tipo_inactivo para nuevo becado (activo por defecto)
   this.becadoForm.get('tipo_inactivo')?.disable();
   
+  // Configurar campos según el rol para NUEVO becado
+  if (this.isRegistro) {
+    // Registro: NO puede editar montos ni pagos
+    this.deshabilitarCamposBecado(false);      // Habilitar campos personales
+    this.deshabilitarCamposFinancieros(true);  // Deshabilitar montos
+    this.habilitarSeccionPagos(false);         // Ocultar sección de pagos
+    
+    // Establecer monto autorizado en 0 (no puede editarlo)
+    this.becadoForm.get('monto_autorizado')?.setValue(0);
+    this.becadoForm.get('monto_autorizado')?.disable();
+  } else if (this.isAdmin) {
+    // Admin: todo habilitado
+    this.deshabilitarCamposBecado(false);
+    this.deshabilitarCamposFinancieros(false);
+    this.habilitarSeccionPagos(true);
+  }
+  
   this.submitted = false;
   this.becadoDialog = true;
 }
 
 editBecado(becadoResumen: BecadoResumen): void {
-
-  if (!this.canEditBecado && !this.canManagePayments) {
+  // Todos los roles que pueden editar algo pueden abrir el diálogo
+  if (!this.canEditAny) {
     this.verDetalle(becadoResumen.id_becado);
     return;
   }
-
+  
   this.loading = true;
   this.becadoService.getById(becadoResumen.id_becado).subscribe({
     next: (response) => {
@@ -504,20 +548,18 @@ editBecado(becadoResumen: BecadoResumen): void {
         const becado = response.data;
         this.editingBecado = becado;
         
-        // Limpiar y normalizar los pagos
         this.pagos = (becado.pagos || []).map(pago => ({
           id: pago.id,
           concepto: pago.concepto || '',
           monto: this.parseNumber(pago.monto)
         }));
         
-        // Normalizar los valores numéricos
         const montoAutorizado = this.parseNumber(becado.monto_autorizado);
         const erogado = this.parseNumber(becado.erogado);
         const pendienteErogar = this.parseNumber(becado.pendiente_erogar);
-        
         const esActivo = becado.estatus === 1;
         
+        // Cargar TODOS los valores al formulario (incluyendo financieros)
         this.becadoForm.patchValue({
           nombre: becado.nombre,
           apellido_p: becado.apellido_p,
@@ -532,32 +574,43 @@ editBecado(becadoResumen: BecadoResumen): void {
           pendiente_erogar: pendienteErogar
         });
         
-        // IMPORTANTE: Recalcular los totales basado en los pagos cargados
         this.calcularTotales();
         
         // Configurar campos según el rol
         if (this.isPagos) {
-          // Usuario de Pagos: Solo puede editar pagos
-          this.deshabilitarCamposBecado(true);  // Deshabilitar campos de becado
-          this.habilitarSeccionPagos(true);      // Habilitar sección de pagos
-        } else if (this.isRegistro) {
-          // Usuario de Registro: Puede editar becado pero NO pagos
-          this.deshabilitarCamposBecado(false); // Habilitar campos de becado
-          this.habilitarSeccionPagos(false);    // Deshabilitar sección de pagos
-        } else if (this.isAdmin) {
+          // Pagos: SOLO puede editar pagos
+          this.deshabilitarCamposBecado(true);    // Deshabilitar campos de becado
+          this.habilitarSeccionPagos(true);        // Habilitar sección de pagos
+        } 
+        else if (this.isRegistro) {
+          // Registro: Puede editar datos personales pero NO pagos ni montos
+          this.deshabilitarCamposBecado(false);   // Habilitar campos de becado
+          this.deshabilitarCamposFinancieros(true); // Deshabilitar montos
+          this.habilitarSeccionPagos(false);       // Ocultar sección de pagos
+          
+          // Asegurar que los valores financieros se muestren correctamente (aunque deshabilitados)
+          this.becadoForm.get('monto_autorizado')?.setValue(montoAutorizado);
+          this.becadoForm.get('erogado')?.setValue(erogado);
+          this.becadoForm.get('pendiente_erogar')?.setValue(pendienteErogar);
+        } 
+        else if (this.isAdmin) {
           // Admin: Todo habilitado
           this.deshabilitarCamposBecado(false);
           this.habilitarSeccionPagos(true);
         }
-
-        // Configurar validaciones según el estatus
+        
+        // Configurar tipo_inactivo según estatus
         const tipoControl = this.becadoForm.get('tipo_inactivo');
         if (esActivo) {
           tipoControl?.disable();
           tipoControl?.clearValidators();
         } else {
-          tipoControl?.enable();
-          tipoControl?.setValidators([Validators.required]);
+          if (this.canChangeStatus) {
+            tipoControl?.enable();
+            tipoControl?.setValidators([Validators.required]);
+          } else {
+            tipoControl?.disable();
+          }
         }
         tipoControl?.updateValueAndValidity();
         
@@ -579,7 +632,11 @@ editBecado(becadoResumen: BecadoResumen): void {
 }
 
 deshabilitarCamposBecado(disabled: boolean): void {
-  const camposBecado = ['nombre', 'apellido_p', 'apellido_m', 'carrera', 'id_universidad', 'id_modalidad', 'monto_autorizado'];
+  // Campos de datos personales que se deshabilitan para Pagos
+  const camposBecado = ['nombre', 'apellido_p', 'apellido_m', 'carrera', 'id_universidad', 'id_modalidad'];
+  
+  // Para Pagos: deshabilitar todos estos campos
+  // Para Registro: habilitar estos campos (disabled = false)
   camposBecado.forEach(campo => {
     const control = this.becadoForm.get(campo);
     if (disabled) {
@@ -588,6 +645,14 @@ deshabilitarCamposBecado(disabled: boolean): void {
       control?.enable();
     }
   });
+  
+  // Control específico para monto_autorizado
+  const montoControl = this.becadoForm.get('monto_autorizado');
+  if (this.canEditMontoAutorizado) {
+    montoControl?.enable();
+  } else {
+    montoControl?.disable();
+  }
 }
 
 habilitarSeccionPagos(enabled: boolean): void {
@@ -638,8 +703,6 @@ saveBecado(): void {
   this.submitted = true;
 
   const estatusValue = this.becadoForm.value.estatus;
-  console.log('Estatus del formulario:', estatusValue);
-  console.log('Tipo inactivo:', this.becadoForm.value.tipo_inactivo);
   
   if (estatusValue === false && !this.becadoForm.value.tipo_inactivo) {
     this.messageService.add({
@@ -659,120 +722,194 @@ saveBecado(): void {
   }
 
   this.loading = true;
-
-  // Calcular erogado antes de guardar
   this.calcularTotales();
-
-  // IMPORTANTE: Obtener los valores del formulario y asegurar tipos
-  const formValues = this.becadoForm.value;
   
-  const becadoData: any = {
-    nombre: formValues.nombre,
-    apellido_p: formValues.apellido_p,
-    apellido_m: formValues.apellido_m || null,
-    carrera: formValues.carrera,
-    id_universidad: Number(formValues.id_universidad),
-    id_modalidad: Number(formValues.id_modalidad),
-    monto_autorizado: Number(formValues.monto_autorizado),
-    erogado: Number(formValues.erogado),
-    pendiente_erogar: Number(formValues.pendiente_erogar),
-    estatus: estatusValue ? 1 : 0,  // Convertir a 1 o 0 explícitamente
-    pagos: this.pagos.filter(p => p.monto > 0 && p.concepto).map(p => ({
-      concepto: p.concepto,
-      monto: Number(p.monto)
-    }))
-  };
+  setTimeout(() => {
+    const formValues = this.becadoForm.value;
+    
+    let nombre, apellido_p, apellido_m, carrera, id_universidad, id_modalidad, monto_autorizado, erogado, pendiente_erogar;
+    
+    if (this.isPagos && this.editingBecado) {
+      // Pagos: solo puede editar pagos y monto autorizado
+      nombre = this.editingBecado.nombre;
+      apellido_p = this.editingBecado.apellido_p;
+      apellido_m = this.editingBecado.apellido_m || null;
+      carrera = this.editingBecado.carrera;
+      id_universidad = this.editingBecado.id_universidad;
+      id_modalidad = this.editingBecado.id_modalidad;
+      monto_autorizado = Number(formValues.monto_autorizado);
+      erogado = this.calcularSumaPagos();
+      pendiente_erogar = monto_autorizado - erogado;
+      if (pendiente_erogar < 0) pendiente_erogar = 0;
+    } 
+    else if (this.isRegistro && this.editingBecado) {
+      // Registro: NO puede editar montos ni pagos, usar valores originales
+      nombre = formValues.nombre;
+      apellido_p = formValues.apellido_p;
+      apellido_m = formValues.apellido_m || null;
+      carrera = formValues.carrera;
+      id_universidad = Number(formValues.id_universidad);
+      id_modalidad = Number(formValues.id_modalidad);
+      monto_autorizado = this.editingBecado.monto_autorizado;
+      erogado = this.editingBecado.erogado;
+      pendiente_erogar = this.editingBecado.pendiente_erogar;
+    } 
+    else {
+      // Admin: usar valores del formulario
+      nombre = formValues.nombre;
+      apellido_p = formValues.apellido_p;
+      apellido_m = formValues.apellido_m || null;
+      carrera = formValues.carrera;
+      id_universidad = Number(formValues.id_universidad);
+      id_modalidad = Number(formValues.id_modalidad);
+      monto_autorizado = Number(formValues.monto_autorizado);
+      erogado = Number(formValues.erogado);
+      pendiente_erogar = Number(formValues.pendiente_erogar);
+    }
+    
+    const becadoData: any = {
+      nombre: nombre,
+      apellido_p: apellido_p,
+      apellido_m: apellido_m,
+      carrera: carrera,
+      id_universidad: id_universidad,
+      id_modalidad: id_modalidad,
+      monto_autorizado: monto_autorizado,
+      erogado: erogado,
+      pendiente_erogar: pendiente_erogar,
+      estatus: estatusValue ? 1 : 0,
+      pagos: this.pagos.filter(p => p.monto > 0 && p.concepto).map(p => ({
+        concepto: p.concepto,
+        monto: Number(p.monto)
+      }))
+    };
 
-  // Manejar tipo_inactivo
-  if (estatusValue === false) {
-    becadoData.tipo_inactivo = formValues.tipo_inactivo;
-  } else {
-    becadoData.tipo_inactivo = null;
-  }
+    if (estatusValue === false) {
+      becadoData.tipo_inactivo = formValues.tipo_inactivo;
+    } else {
+      becadoData.tipo_inactivo = null;
+    }
 
-  console.log('=== DATOS A ENVIAR AL BACKEND ===');
-  console.log('ID Becado:', this.editingBecado?.id_becado);
-  console.log('Estatus (número):', becadoData.estatus);
-  console.log('Tipo inactivo:', becadoData.tipo_inactivo);
-  console.log('Datos completos:', JSON.stringify(becadoData, null, 2));
+    console.log('=== DATOS A ENVIAR ===');
+    console.log('Rol:', this.isPagos ? 'Pagos' : (this.isRegistro ? 'Registro' : 'Admin'));
+    console.log('Monto autorizado:', monto_autorizado);
+    console.log('Erogado:', erogado);
+    console.log('Pendiente:', pendiente_erogar);
 
-  if (this.editingBecado) {
-    this.becadoService.update(this.editingBecado.id_becado!, becadoData).subscribe({
-      next: (response) => {
-        this.loading = false;
-        console.log('Respuesta del servidor:', response);
-        
-        if (response.success) {
-          this.messageService.add({
-            severity: 'success',
-            summary: 'Éxito',
-            detail: `Becado ${estatusValue ? 'activado' : 'desactivado'} correctamente`,
-            life: 3000
-          });
-          this.becadoDialog = false;
-          // Recargar después de cerrar el diálogo
-          setTimeout(() => {
-            this.cargarTodo();
-          }, 500);
-        } else {
+    if (this.editingBecado) {
+      // ACTUALIZAR becado existente
+      this.becadoService.update(this.editingBecado.id_becado!, becadoData).subscribe({
+        next: (response) => {
+          this.loading = false;
+          if (response.success) {
+            this.messageService.add({
+              severity: 'success',
+              summary: 'Éxito',
+              detail: this.isPagos ? 'Pagos actualizados correctamente' : 'Becado actualizado correctamente',
+              life: 3000
+            });
+            this.becadoDialog = false;
+            setTimeout(() => {
+              this.cargarTodo();
+            }, 500);
+          } else {
+            this.messageService.add({
+              severity: 'error',
+              summary: 'Error',
+              detail: response.message || 'Error al actualizar',
+              life: 5000
+            });
+          }
+        },
+        error: (error) => {
+          this.loading = false;
+          console.error('Error:', error);
           this.messageService.add({
             severity: 'error',
             summary: 'Error',
-            detail: response.message || 'Error al actualizar el becado',
+            detail: error.error?.message || 'Error al actualizar',
             life: 5000
           });
         }
-      },
-      error: (error) => {
-        this.loading = false;
-        console.error('Error completo:', error);
-        this.messageService.add({
-          severity: 'error',
-          summary: 'Error',
-          detail: error.error?.message || error.message || 'Error al actualizar el becado',
-          life: 5000
-        });
+      });
+    } else {
+      // CREAR NUEVO BECADO
+      let montoAutorizadoValue = 0;
+      let erogadoValue = 0;
+      let pendienteValue = 0;
+      
+      if (this.isRegistro) {
+        // Registro: enviar montos en 0
+        montoAutorizadoValue = 0;
+        erogadoValue = 0;
+        pendienteValue = 0;
+      } else {
+        // Admin: usar valores del formulario
+        montoAutorizadoValue = Number(formValues.monto_autorizado);
+        erogadoValue = Number(formValues.erogado);
+        pendienteValue = Number(formValues.pendiente_erogar);
       }
-    });
-  } else {
-    // Crear nuevo becado
-    this.becadoService.create(becadoData).subscribe({
-      next: (response) => {
-        this.loading = false;
-        console.log('Respuesta create:', response);
-        
-        if (response.success) {
-          this.messageService.add({
-            severity: 'success',
-            summary: 'Éxito',
-            detail: 'Becado creado correctamente',
-            life: 3000
-          });
-          this.becadoDialog = false;
-          setTimeout(() => {
-            this.cargarTodo();
-          }, 500);
-        } else {
+      
+      const newBecadoData: any = {
+        nombre: formValues.nombre,
+        apellido_p: formValues.apellido_p,
+        apellido_m: formValues.apellido_m || null,
+        carrera: formValues.carrera,
+        id_universidad: Number(formValues.id_universidad),
+        id_modalidad: Number(formValues.id_modalidad),
+        monto_autorizado: montoAutorizadoValue,
+        erogado: erogadoValue,
+        pendiente_erogar: pendienteValue,
+        estatus: estatusValue ? 1 : 0,
+        pagos: []  // Registro no puede agregar pagos al crear
+      };
+      
+      if (estatusValue === false) {
+        newBecadoData.tipo_inactivo = formValues.tipo_inactivo;
+      } else {
+        newBecadoData.tipo_inactivo = null;
+      }
+      
+      console.log('=== CREANDO NUEVO BECADO ===');
+      console.log('Rol:', this.isRegistro ? 'Registro' : 'Admin');
+      console.log('Datos:', JSON.stringify(newBecadoData, null, 2));
+      
+      this.becadoService.create(newBecadoData).subscribe({
+        next: (response) => {
+          this.loading = false;
+          if (response.success) {
+            this.messageService.add({
+              severity: 'success',
+              summary: 'Éxito',
+              detail: 'Becado creado correctamente',
+              life: 3000
+            });
+            this.becadoDialog = false;
+            setTimeout(() => {
+              this.cargarTodo();
+            }, 500);
+          } else {
+            this.messageService.add({
+              severity: 'error',
+              summary: 'Error',
+              detail: response.message || 'Error al crear el becado',
+              life: 5000
+            });
+          }
+        },
+        error: (error) => {
+          this.loading = false;
+          console.error('Error create:', error);
           this.messageService.add({
             severity: 'error',
             summary: 'Error',
-            detail: response.message || 'Error al crear el becado',
+            detail: error.error?.message || error.message || 'Error al crear el becado',
             life: 5000
           });
         }
-      },
-      error: (error) => {
-        this.loading = false;
-        console.error('Error create:', error);
-        this.messageService.add({
-          severity: 'error',
-          summary: 'Error',
-          detail: error.error?.message || error.message || 'Error al crear el becado',
-          life: 5000
-        });
-      }
-    });
-  }
+      });
+    }
+  }, 100);
 }
 
   refrescar(): void {
@@ -909,6 +1046,19 @@ limpiarFiltros(table: any): void {
       life: 2000
     });
   }
+}
+
+deshabilitarCamposFinancieros(disabled: boolean): void {
+  // Deshabilitar campos financieros para Registro
+  const camposFinancieros = ['monto_autorizado', 'erogado', 'pendiente_erogar'];
+  camposFinancieros.forEach(campo => {
+    const control = this.becadoForm.get(campo);
+    if (disabled) {
+      control?.disable();
+    } else {
+      control?.enable();
+    }
+  });
 }
 
 reactivarBecado(becado: BecadoResumen): void {

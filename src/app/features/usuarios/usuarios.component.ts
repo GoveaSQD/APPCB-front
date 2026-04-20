@@ -105,99 +105,127 @@ export class UsuariosComponent implements OnInit {
     });
   }
 
-  openDialog(edit: boolean, usuario?: Usuario): void {
-    this.isEditing = edit;
-    this.dialogVisible = true;
+openDialog(edit: boolean, usuario?: Usuario): void {
+  this.isEditing = edit;
+  this.dialogVisible = true;
+  
+  if (edit && usuario) {
+    this.selectedUsuario = usuario;
+    // Convertir cualquier valor a booleano (true si existe y es truthy)
+    const activoBoolean = !!usuario.activo;
     
-    if (edit && usuario) {
-      this.selectedUsuario = usuario;
-      this.usuarioForm.patchValue({
-        nombre: usuario.nombre,
-        ap_paterno: usuario.ap_paterno || '',
-        ap_materno: usuario.ap_materno || '',
-        email: usuario.email,
-        tipo_usuario: usuario.tipo_usuario || 2,
-        activo: usuario.activo !== false
-      });
-      this.usuarioForm.get('password')?.clearValidators();
-      this.usuarioForm.get('password')?.updateValueAndValidity();
-    } else {
-      this.selectedUsuario = null;
-      this.usuarioForm.reset({
-        nombre: '',
-        ap_paterno: '',
-        ap_materno: '',
-        email: '',
-        password: '',
-        tipo_usuario: 2,
-        activo: true
-      });
-      this.usuarioForm.get('password')?.setValidators([Validators.required, Validators.minLength(6)]);
-      this.usuarioForm.get('password')?.updateValueAndValidity();
-    }
+    this.usuarioForm.patchValue({
+      nombre: usuario.nombre,
+      ap_paterno: usuario.ap_paterno || '',
+      ap_materno: usuario.ap_materno || '',
+      email: usuario.email,
+      tipo_usuario: usuario.tipo_usuario || 2,
+      activo: activoBoolean
+    });
+    this.usuarioForm.get('password')?.clearValidators();
+    this.usuarioForm.get('password')?.updateValueAndValidity();
+  } else {
+    this.selectedUsuario = null;
+    this.usuarioForm.reset({
+      nombre: '',
+      ap_paterno: '',
+      ap_materno: '',
+      email: '',
+      password: '',
+      tipo_usuario: 2,
+      activo: true
+    });
+    this.usuarioForm.get('password')?.setValidators([Validators.required, Validators.minLength(6)]);
+    this.usuarioForm.get('password')?.updateValueAndValidity();
+  }
+}
+
+saveUsuario(): void {
+  if (this.usuarioForm.invalid) {
+    this.usuarioForm.markAllAsTouched();
+    return;
   }
 
-  saveUsuario(): void {
-    if (this.usuarioForm.invalid) {
-      this.usuarioForm.markAllAsTouched();
+  this.saving = true;
+  const formData = this.usuarioForm.value;
+
+  // Convertir datos al formato que espera el backend
+  const dataToSend: any = {
+    nombre: formData.nombre,
+    ap_paterno: formData.ap_paterno || null,
+    ap_materno: formData.ap_materno || null,
+    email: formData.email,
+    tipo_usuario: Number(formData.tipo_usuario),
+    activo: formData.activo ? 1 : 0  // Si es true -> 1, false -> 0
+  };
+
+  // Solo incluir password si existe
+  if (formData.password && formData.password.trim() !== '') {
+    dataToSend.password = formData.password;
+  }
+
+  console.log('Datos a enviar:', dataToSend);
+
+  if (this.isEditing && this.selectedUsuario) {
+    this.usuarioService.update(this.selectedUsuario.id_usuario!, dataToSend).subscribe({
+      next: (response) => {
+        if (response.success) {
+          this.messageService.add({
+            severity: 'success',
+            summary: 'Éxito',
+            detail: 'Usuario actualizado correctamente'
+          });
+          this.dialogVisible = false;
+          this.loadUsuarios();
+        }
+        this.saving = false;
+      },
+      error: (error) => {
+        console.error('Error al actualizar:', error);
+        this.messageService.add({
+          severity: 'error',
+          summary: 'Error',
+          detail: error.error?.message || 'Error al actualizar usuario'
+        });
+        this.saving = false;
+      }
+    });
+  } else {
+    if (!dataToSend.password) {
+      this.messageService.add({
+        severity: 'error',
+        summary: 'Error',
+        detail: 'La contraseña es requerida para nuevos usuarios'
+      });
+      this.saving = false;
       return;
     }
-
-    this.saving = true;
-    const formData = this.usuarioForm.value;
-
-    if (this.isEditing && this.selectedUsuario) {
-      if (!formData.password) {
-        delete formData.password;
+    
+    this.authService.registerUser(dataToSend).subscribe({
+      next: (response) => {
+        if (response.success) {
+          this.messageService.add({
+            severity: 'success',
+            summary: 'Éxito',
+            detail: 'Usuario creado correctamente'
+          });
+          this.dialogVisible = false;
+          this.loadUsuarios();
+        }
+        this.saving = false;
+      },
+      error: (error) => {
+        console.error('Error al crear:', error);
+        this.messageService.add({
+          severity: 'error',
+          summary: 'Error',
+          detail: error.error?.message || 'Error al crear usuario'
+        });
+        this.saving = false;
       }
-      
-      this.usuarioService.update(this.selectedUsuario.id_usuario!, formData).subscribe({
-        next: (response) => {
-          if (response.success) {
-            this.messageService.add({
-              severity: 'success',
-              summary: 'Éxito',
-              detail: 'Usuario actualizado correctamente'
-            });
-            this.dialogVisible = false;
-            this.loadUsuarios();
-          }
-          this.saving = false;
-        },
-        error: (error) => {
-          this.messageService.add({
-            severity: 'error',
-            summary: 'Error',
-            detail: error.error?.message || 'Error al actualizar usuario'
-          });
-          this.saving = false;
-        }
-      });
-    } else {
-      this.authService.registerUser(formData).subscribe({
-        next: (response) => {
-          if (response.success) {
-            this.messageService.add({
-              severity: 'success',
-              summary: 'Éxito',
-              detail: 'Usuario creado correctamente'
-            });
-            this.dialogVisible = false;
-            this.loadUsuarios();
-          }
-          this.saving = false;
-        },
-        error: (error) => {
-          this.messageService.add({
-            severity: 'error',
-            summary: 'Error',
-            detail: error.error?.message || 'Error al crear usuario'
-          });
-          this.saving = false;
-        }
-      });
-    }
+    });
   }
+}
 
   confirmDelete(usuario: Usuario): void {
     this.confirmationService.confirm({
