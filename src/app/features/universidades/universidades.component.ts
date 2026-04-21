@@ -85,7 +85,7 @@ export class UniversidadesComponent implements OnInit {
       ciudad: ['', Validators.required],
       pais: ['', Validators.required],
       estado: [''],
-      estatus: [1]
+      estatus: [true]
     });
 
     // Suscripción al año
@@ -126,7 +126,7 @@ export class UniversidadesComponent implements OnInit {
       ciudad: '',
       pais: '',
       estado: '',
-      estatus: 1
+      estatus: true
     });
     this.submitted = false;
     this.universidadDialog = true;
@@ -139,7 +139,7 @@ export class UniversidadesComponent implements OnInit {
       ciudad: universidad.ciudad,
       pais: universidad.pais,
       estado: universidad.estado || '',
-      estatus: universidad.estatus
+      estatus: universidad.estatus === 1
     });
     this.universidadDialog = true;
   }
